@@ -105,7 +105,11 @@
 ## 整改问题（Review fail 回 S4）
 
 ## Issue I-1：修正并锁定 0001 状态卡头部与四方一致性
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-I-1.1（rule）通过：磁盘与 git 真相复核——state.md 头部为 Review/等待 R2/当前任务 None，S4 [x]、S5 [ ]；INDEX 0001 行当前阶段=Review；tasks.md 无 pending/in_progress/blocked；HEAD 链 6ddd5c4→6163f3a→78fb747（命令输出见本次 shell 记录）
+  - TR-I-1.2（rule）：由 R2 全新评审者按恢复协议干跑取证，结果回填 review.md R2
+  - TR-I-1.3（rule）通过：本次 `git diff --name-only 78fb747..` 仅 state.md、tasks.md、docs/adr/README.md，未触碰模板与工作流规范文档；F-2 advisory 已在 ADR 索引 0001 行追加 0002 指针
 - **Priority**：medium
 - **Depends On**：None
 - **Discovered By**：Review R1（F-1，actionable）

@@ -7,13 +7,14 @@
 - Slug：workflow-resume-and-intake
 - 分支：fix/0001-workflow-resume-and-intake（注：本需求创建于双轨机制落地前，经用户批准沿用该分支名，等价于新规则的 fix/0001）
 - 当前阶段：Review
-- 下一动作：由未参与实施的全新上下文执行独立评审，按检查点取证并出具 R1 结论
-- 当前任务：None（Task 1-6 全部 completed）
+- 下一动作：R1 fail 的 F-1 已按 Issue I-1 整改完成，由全新上下文开启 R2 独立评审
+- 当前任务：None（Task 1-6 + Issue I-1 全部 completed）
 - 更新时间：2026-09-27
 - 交接备注：
   - 本需求为"犬食其言"：0001 目录在新机制建成前手动创建，无历史包袱；基线提交 f26031b 已在 main/develop/fix 三分支同点
   - Task 1-4 已完成并有真实命令证据（见 tasks.md）；Task 5 完成 ADR-0002、本状态卡与 INDEX 登记
-  - 坑：对 tasks.md 同文件并行多处 Edit 会互相覆盖，状态更新须顺序编辑
+  - 坑：对同一文件并行多处 Edit 会互相覆盖；且工具编辑层与磁盘曾出现瞬时不一致（R1 的 F-1 即由此误读），状态真相以 git 提交为准
+  - 提交链：f26031b 基线 → 6ddd5c4 实施 → 6163f3a S4 台账 → 78fb747 R1 fail + I-1 登记 → 本次 I-1 整改
 
 ## 阶段门禁记录（严格按序；Exit 未全部勾选，禁止进入下一阶段）
 
@@ -23,7 +24,7 @@
   - Exit：tasks.md 6 个任务依赖有序（Task 1→6），每条 AC 均有任务覆盖，每任务至少一条 TR
 - [x] **S3 Approve** ｜ 完成时间：2026-09-27
   - Exit：用户通过 NotifyUser 明确批准 spec.md 与 tasks.md（含首次基线提交授权）
-- [x] **S4 Implement** ｜ 完成时间：2026-09-27
-  - Exit：Task 1-6 全部 completed 且有 Completion Evidence；pytest 1 passed；零代码改动 ruff 面无变化；实施已提交 6ddd5c4
+- [x] **S4 Implement** ｜ 完成时间：2026-09-27（R1 fail 后整改 I-1，二次满足）
+  - Exit：Task 1-6 与 Issue I-1 全部 completed 且有 Completion Evidence；pytest 1 passed；零代码改动 ruff 面无变化；state/INDEX/tasks/git 四方一致；实施 6ddd5c4、整改见本次提交
 - [ ] **S5 Review** ｜ 完成时间：—
   - Exit：review.md R1 由全新上下文出具且 Result = pass；INDEX 登记 Done
