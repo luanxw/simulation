@@ -99,3 +99,21 @@
 - **Test Requirements**：
   - `rule` TR-6.1：全部 rule TR 有真实命令输出证据，pytest 全绿；证据为命令输出记录到各任务 Completion Evidence
   - `rubric` TR-6.2：TR-4.2 同维度自评分并给出理由与证据，threshold >= 4；最终分数以独立 Review 为准
+
+---
+
+## 整改问题（Review fail 回 S4）
+
+## Issue I-1：修正并锁定 0001 状态卡头部与四方一致性
+- **Status**：`pending`
+- **Priority**：medium
+- **Depends On**：None
+- **Discovered By**：Review R1（F-1，actionable）
+- **Description**：
+  - R1 评审时读到 state.md 头部为"Implement / Task 5 in_progress"，与 S4 已勾选、INDEX=Review、tasks 全 completed、git HEAD=6163f3a 矛盾；疑似工具编辑层与磁盘瞬时不同步。需以磁盘/git 真相为准复核锁定，使 state 头部 == INDEX == tasks 状态 == git 提交四方一致
+- **Acceptance Criteria Addressed**：AC-1（兼 AC-2 写卡纪律）
+- **Test Requirements**：
+  - `rule` TR-I-1.1：重读 state.md，头部三字段（当前阶段/下一动作/当前任务）与 S1-S5 勾选态自洽；与 INDEX 0001 行逐字一致；与 tasks.md 无 pending/in_progress/blocked 一致；证据为 sed/grep/git 输出
+  - `rule` TR-I-1.2：全新评审者按恢复协议仅读 INDEX+state.md 干跑，得到唯一无冲突答案（当前 S5、等待新一轮评审）；证据为 R2 评审记录
+  - `rule` TR-I-1.3：整改仅限 state.md/ADR 索引注记（含 advisory F-2）及必要提交，不动模板与工作流文档；证据为 `git diff --name-only`
+- **Notes**：advisory F-2 顺手处理：ADR README 的 0001 索引行加"模板/分支部分见 0002"指针
