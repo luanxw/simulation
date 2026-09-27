@@ -1,7 +1,8 @@
 # 常驻授权、S6 自动交付与可选评审者 - 修复实施计划
 
 ## Task 1：Intake 台账与分支例外留痕
-- **Status**：`pending`
+- **Completion Evidence**：0002 目录三件（spec/tasks/state；review 按新规 S5 才实例化）就绪；state.md 含评审者指定字段、S3 自动批准依据、分支例外留痕；INDEX 第 8 行登记 0002；intake 提交 7307aff。
+- **Status**：`completed`
 - **Priority**：high
 - **Depends On**：None
 - **Description**：
@@ -12,7 +13,8 @@
   - `rule` TR-1.1：0002 目录含四件套，state.md 字段完整且记录 S3 自动批准依据与分支例外，INDEX 含 0002 行；证据为 ls/grep
 
 ## Task 2：工作流 README 六阶段化
-- **Status**：`pending`
+- **Completion Evidence**：`.trae/specs/README.md` 重写为六阶段版（常驻授权表/否决权/S3 自动/S6/push 当次确认/评审者可选 browser_use·search+三不变/恢复协议/DoD）；TR-2.1 grep 五要素全中、旧强制批准表述 CLEAN（见 Task 5 取证）。
+- **Status**：`completed`
 - **Priority**：high
 - **Depends On**：Task 1
 - **Description**：
@@ -25,7 +27,8 @@
   - `rule` TR-2.1：grep 命中 S6/自动批准/当次确认/评审者指定/否决回退，且无残留旧强制批准表述；证据为 grep
 
 ## Task 3：双轨模板升级六阶段
-- **Status**：`pending`
+- **Completion Evidence**：两套 state.md 均加评审者指定字段与 S6 Deliver 门禁（grep 各 1 命中）；两套 review.md 加 Reviewer agent 类型行与三不变说明；fix/spec.md"五阶段"已改；`grep -rn 五阶段 _templates/` = TEMPLATE CLEAN。
+- **Status**：`completed`
 - **Priority**：high
 - **Depends On**：Task 2
 - **Description**：
@@ -37,7 +40,8 @@
   - `rule` TR-3.1：两套 state.md 均 grep 到 S6 与评审者指定字段；模板目录无残留冲突表述；证据为 find+grep
 
 ## Task 4：AGENTS.md、根 README、ADR-0003
-- **Status**：`pending`
+- **Completion Evidence**：AGENTS.md 七节重写（常驻授权/六阶段所有权/push 唯一确认点/评审者可选/DoD S1-S6）；根 README 六阶段流程图+常驻授权+S6+push 确认；ADR-0003 新建并登记 docs/adr/README.md（含 0001/0002 分支例外）；11 条相对链接 ALL LINKS OK。
+- **Status**：`completed`
 - **Priority**：high
 - **Depends On**：Task 3
 - **Description**：
@@ -50,7 +54,8 @@
   - `rubric` TR-4.2：自主边界可理解性 1-5，anchors 见 AC-7，threshold >= 4，评审者评分
 
 ## Task 5：S4 自证与提交
-- **Status**：`pending`
+- **Completion Evidence**：`PYTHONPATH=src pytest -q` = 1 passed（1 warning 为 pytest6 对 pythonpath 配置的已知无害警告）；零 .py 改动，lint 面无变化（ruff>=0.6 已在 dev 依赖声明）；AC-1~5 grep 全通过、旧表述 CLEAN、链接无死链；主体提交 93c7c8d（intake 7307aff 之后）。
+- **Status**：`completed`
 - **Priority**：medium
 - **Depends On**：Task 4
 - **Description**：
