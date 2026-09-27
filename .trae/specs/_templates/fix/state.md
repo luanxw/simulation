@@ -1,0 +1,27 @@
+# 状态卡 · NNNN-<slug>
+
+> 断点恢复的唯一权威。阶段切换或任务状态变化时**立即**更新本卡；中断后新 agent 按工作流 README 的"恢复协议"读本卡续跑。保持一屏以内。
+
+- 编号：NNNN
+- 类型：fix
+- Slug：<slug>
+- 分支：fix/NNNN-<slug>
+- 当前阶段：Specify            <!-- Specify | Plan | Approve | Implement | Review | Done -->
+- 下一动作：[谁在什么时候做什么，如"等待用户批准 spec.md 与 tasks.md"]
+- 当前任务：Task 1（pending）   <!-- 无则写 None -->
+- 更新时间：YYYY-MM-DD
+- 交接备注：
+  - [给下一位 agent 的关键上下文：复现要点、已试方案、坑；没有写"无"]
+
+## 阶段门禁记录（严格按序；Exit 未全部勾选，禁止进入下一阶段）
+
+- [ ] **S1 Specify** ｜ 完成时间：—
+  - Exit：spec.md 存在且含复现步骤与影响范围；AC 以回归 rule 为主、类型合法；待澄清问题清零（根因允许 Task 1 回填，但复现路径必须成立）
+- [ ] **S2 Plan** ｜ 完成时间：—
+  - Exit：tasks.md 含"定位 → 修复+回归 → 自证"主线；每条 AC 至少映射一个任务；每任务至少一条 TR
+- [ ] **S3 Approve** ｜ 完成时间：—
+  - Exit：用户对 spec.md + tasks.md 明确批准（在此记录批准方式与日期）
+- [ ] **S4 Implement** ｜ 完成时间：—
+  - Exit：根因已回填；所有任务 ∈ completed/cancelled 且有 Completion Evidence；回归测试红绿成立；pytest 与 ruff 全绿
+- [ ] **S5 Review** ｜ 完成时间：—
+  - Exit：review.md 最近一轮 Result = pass；每条 AC 有独立证据；INDEX 已登记最终状态

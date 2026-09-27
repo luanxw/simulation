@@ -1,7 +1,9 @@
 # 工作流断点恢复、严格门禁与智能受理 - 实施计划
 
 ## Task 1：建立 git 基线并从 develop 建工作分支
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-1.1（rule）通过：基线提交 f26031b 在 main；`git branch` 含 develop、fix/0001-workflow-resume-and-intake、main；`git log --decorate` 显示三者同指 f26031b，工作分支父提交与 develop 一致；未 push
 - **Priority**：high
 - **Depends On**：None
 - **Description**：
@@ -29,7 +31,10 @@
   - `rule` TR-2.3：fix/spec.md 含复现步骤与根因章节，fix/tasks.md 含回归测试任务；证据为文件内容
 
 ## Task 3：更新工作流指南（智能受理 + 严格门禁 + 恢复协议）
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-3.1（rule）通过：逐项 grep 命中智能受理/关键词/判定样例/受理四步/git switch develop/S1-S5/Entry(5)/Exit(6)/断点恢复协议/feature|fix 新前缀/询问一次/下一动作，全部 ≥1
+  - TR-3.2（rule）通过：grep 旧扁平模板路径与旧前缀 spec/NNNN 均无输出，无残留引用
 - **Priority**：high
 - **Depends On**：Task 2
 - **Description**：
@@ -45,7 +50,10 @@
   - `rule` TR-3.2：全文无残留旧路径 `_templates/spec.md` 式引用与旧前缀 `spec/NNNN`（本规格目录名除外的历史不可变引用说明）；证据为 grep
 
 ## Task 4：更新 INDEX、AGENTS.md、根 README
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-4.1（rule）通过：6 个被引用路径全部存在；AGENTS.md 含智能受理/feature|fix 前缀/develop(3)/state.md(6)/断点恢复/一次询问；INDEX 含"类型"列（feature / fix）；根 README 已重写为一句话受理+五阶段+断点续跑
+  - TR-4.2（rubric）自评 4 分：根 README 提供一句话受理、3 条分类样例、自动四步、续跑四步，无需手动操作；未达 5 因首次用户仍需阅读约半屏规则才能信任分类结果。最终分以独立 Review 为准
 - **Priority**：high
 - **Depends On**：Task 3
 - **Description**：
@@ -58,7 +66,10 @@
   - `rubric` TR-4.2：首次使用顺畅度；scale 1-5；anchors 1=仍需多文件/手动操作，3=可照做但有歧义，5=一句话受理且步骤无歧义含样例与续跑；threshold >= 4；evidence 为评审者按根 README 模拟从一句话到分支建成的全过程
 
 ## Task 5：ADR-0002 与规格自登记
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-5.1（rule）通过：docs/adr/0002-workflow-checkpoints-and-intake.md 存在且状态 Accepted；ADR README 索引含 0002 行
+  - TR-5.2（rule）通过：0001/state.md 存在（字段与真实进度一致：S1-S3 勾选、S4/S5 未勾），INDEX 含 0001 fix 行；review.md 按文件所有权规则在 S5 前不存在，符合预期
 - **Priority**：medium
 - **Depends On**：Task 4
 - **Description**：

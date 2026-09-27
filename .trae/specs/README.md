@@ -1,106 +1,171 @@
 # 规格驱动开发工作流（Spec-Driven Workflow）
 
-本目录是项目所有需求变更的**唯一事实来源**。任何非平凡的功能开发、重构或跨模块变更，都必须先在本目录走完规格流程，再动业务代码。
+本目录是项目所有需求变更的**唯一事实来源**。用户只需说一句话（"我要……"或"帮我修复/优化……"），AI 代理按"第 0 步智能受理"自动开工；任何非平凡变更都必须走完五阶段门禁才允许交付。
 
-## 目录组织：按特性隔离
-
-每个特性/需求一个独立文件夹，端到端内聚三件套：
+## 目录组织：按特性隔离 + 类型双轨
 
 ```text
 .trae/specs/
-├── README.md                 # 本工作流指南
-├── INDEX.md                  # 全部需求的状态索引
-├── _templates/               # 三件套模板（新需求从这里复制）
-│   ├── spec.md
-│   ├── tasks.md
-│   └── review.md
-└── NNNN-<kebab-case-slug>/    # 一个需求一个文件夹，例如 0001-collision-detection/
-    ├── spec.md               # 做什么（需求与验收标准）
-    ├── tasks.md              # 怎么做（任务队列、整改问题、完成证据）
-    └── review.md             # 独立评审结论（仅 Review 阶段创建/修改）
+├── README.md                  # 本工作流指南（权威细则）
+├── INDEX.md                   # 全部变更的状态索引（取号看这里）
+├── _templates/
+│   ├── feature/               # 新需求交付模板（完整规格）
+│   │   ├── spec.md
+│   │   ├── tasks.md
+│   │   ├── review.md
+│   │   └── state.md           # 断点状态卡
+│   └── fix/                   # 问题修复模板（轻量：复现/根因/回归）
+│       ├── spec.md
+│       ├── tasks.md
+│       ├── review.md
+│       └── state.md
+└── NNNN-<slug>/               # 一条变更一个文件夹
+    ├── spec.md                # 做什么
+    ├── tasks.md               # 怎么做 + 完成证据
+    ├── review.md              # 独立评审（仅 Review 阶段可写）
+    └── state.md               # 断点状态卡（进度的唯一权威）
 ```
 
-- 编号 `NNNN` 四位递增、全局唯一，名称用英文短横线 slug。
-- 一个文件夹 = 一条可独立交付、可独立评审的变更线。
-- 文件夹一旦创建不重命名（编号稳定，供分支名、提交信息、ADR 引用）。
+- `NNNN` 四位递增、feature/fix 共用、永不复用；slug 用英文 kebab-case。
+- 文件夹一旦创建不重命名；编号供分支名、提交信息、ADR 长期引用。
 
-## 五个阶段（严格按序）
+---
 
-| 阶段 | 产出 | 写入的文件 | 退出条件 |
-|---|---|---|---|
-| 1. 规格澄清 Specify | 需求共识 | `spec.md` | 验收标准无歧义，待澄清问题清零或被显式接受 |
-| 2. 计划 Plan | 实施队列 | `tasks.md` | 每条 AC 都映射到任务，任务原子、依赖有序 |
-| 3. 批准 Approve | 用户明确批准 | — | 用户对 `spec.md` + `tasks.md` 显式同意 |
-| 4. 实施 Implement | 可运行代码 + 自证 | `tasks.md`（业务代码在 `src/`） | 队列清空且每个任务有 Completion Evidence |
-| 5. 评审 Review | 独立评审结论 | `review.md` | 独立评审 `pass`（唯一成功出口） |
+## 第 0 步：智能受理（Intake）
 
-### 阶段门禁（硬规则）
+用户给出一句话需求时，AI 代理**自动**完成分类、取号、复制模板、建分支，不要求用户手动操作。
 
-1. `spec.md`、`tasks.md` 必须先于批准和实施存在。
-2. 未获明确批准，不得开始实施。批准若改变需求，回到 Specify 并重生成受影响的计划。
-3. `review.md` **只能在 Review 阶段创建或修改**；Implement 阶段它只读，即使已存在。
-4. 评审失败（fail）必须把每条可执行发现落成 `tasks.md` 中的 `pending` 整改 Issue，然后才允许选任务干活。
-5. 整改清空后，必须用**全新上下文**启动新一轮评审，不允许实施者自验充当终审。
+### 0.1 分类规则
 
-## 验收词汇：rule 与 rubric
+| 判定 | 触发条件 |
+|---|---|
+| **fix（问题修复）** | 输入命中修复类关键词：修复、优化、bug、报错、错误、异常、崩溃、挂了、故障、不工作、不行、失败、缺陷、慢、卡、超时、回归（含英文 bug/fix/error/regression/refactor） |
+| **feature（新需求交付）** | 不命中上述关键词的一切新增能力、新模块、行为增强 |
 
-每条验收标准（AC）和测试需求（TR）有且仅有一种类型：
+判定样例：
+
+- "修复碰撞检测穿模的问题" → fix
+- "优化一下仿真主循环的帧率" → fix
+- "给仿真器加一个暂停按钮"（无修复类关键词）→ feature
+- **歧义处理**：一句话同时像优化又像新能力、或无法判断影响面时，只向用户**询问一次**（"这是问题修复还是新功能？"），确认后继续，不反复追问。
+
+### 0.2 受理四步（自动执行）
+
+```bash
+# 1. 取号：查 INDEX.md 已有最大编号 +1；从用户输入提炼英文 kebab-case slug
+#    例："修复碰撞检测穿模" → 编号 0002，slug collision-penetration-fix
+
+# 2. 复制对应类型模板四件套
+cp -R .trae/specs/_templates/fix .trae/specs/0002-collision-penetration-fix
+#   feature 同理：cp -R .trae/specs/_templates/feature .trae/specs/0003-xxx
+
+# 3. 一律从最新 develop 创建工作分支（不允许从别的工作分支拉）
+git switch develop
+git pull --ff-only            # 有远端且需要同步时；纯本地仓库跳过
+git switch -c fix/0002-collision-penetration-fix
+#   新需求分支名：feature/NNNN-<slug>；修复分支名：fix/NNNN-<slug>
+
+# 4. 初始化 state.md（编号/类型/slug/分支/更新时间），在 INDEX.md 登记新行
+#    然后进入 S1 Specify
+```
+
+- `develop` 分支不存在时（仅仓库初始化当天可能发生）：先由 main 基线创建 `git branch develop`，再执行第 3 步。
+- 受理完成的标志：特性目录四件套就位、当前位于对应工作分支、state.md 与 INDEX 已登记。
+
+---
+
+## 五个阶段：严格串行门禁
+
+```text
+S1 Specify → S2 Plan → S3 Approve → S4 Implement → S5 Review → Done
+```
+
+**铁律：上一阶段 Exit 清单未全部勾选并写入 state.md，不得进入下一阶段。** 每个阶段的进入条件不满足时，回到应处的阶段。
+
+### S1 Specify 规格澄清
+- **Entry**：Intake 已完成（四件套在、分支对、INDEX 已登记）。
+- **做什么**：调研代码、澄清歧义，只定义"做什么"，填写 `spec.md`（fix 版必须给出可复现步骤；根因允许留到 Implement Task 1 回填）。
+- **Exit（全部满足才能勾 S1）**：
+  - spec.md 存在；每条 AC 类型仅为 `rule` 或 `rubric` 且写明证据来源；
+  - 待澄清问题清零，或被用户显式接受为假设；
+  - state.md 更新：当前阶段→Plan，下一动作、当前任务、更新时间、交接备注已填。
+
+### S2 Plan 计划
+- **Entry**：state.md 中 S1 已勾选。
+- **做什么**：把每条 AC 映射为原子、依赖有序的垂直切片任务，每任务至少一条 TR，填写 `tasks.md`。
+- **Exit**：每条 AC 至少被一个任务覆盖；任务有优先级与 Depends On；fix 类保持"定位→修复+回归→自证"主线；state.md 推进到 Approve。
+
+### S3 Approve 批准
+- **Entry**：S2 已勾选。
+- **做什么**：把 spec.md 与 tasks.md 一并提交用户审阅，**等待明确批准**；不批准或要求改需求时回到 S1/S2 修订，重新提请批准。
+- **Exit**：用户明确批准；在 state.md 的 S3 记录批准方式与日期；推进到 Implement。
+
+### S4 Implement 实施
+- **Entry**：S3 已勾选（未批准不得动 `src/`、`tests/`）。
+- **做什么**：一次只推进一个最高优先级的就绪任务：置 in_progress → 实施 → 自验全部 TR → 写 Completion Evidence → 置 completed；同步更新 state.md 的当前任务/交接备注。阻塞写 `Blocked By` / `Unblock Condition` 并通知用户。
+- **Exit**：所有任务 ∈ {completed, cancelled}，无 pending/in_progress/blocked；每个 completed 有 Completion Evidence（rubric 含得分、理由、证据）；每个 cancelled 有用户批准；`pytest`、`ruff check .` 全绿；state.md 推进到 Review。
+
+### S5 Review 独立评审
+- **Entry**：S4 已勾选，队列已清空。
+- **做什么**：由**未参与实施的全新上下文**按 review.md 检查点独立取证；pass 收尾，fail 把每条 actionable 发现落成 tasks.md 的 pending Issue 并回到 S4，blocked 记录环境阻塞并请求解决。整改/解阻后必须以**全新评审者**开启新一轮（R2、R3……）。
+- **Exit（= 整个需求完成）**：最近一轮 Result = pass；每个检查点通过、每条 AC 有独立证据、无 actionable 发现；INDEX 登记 Done 与评审结果；state.md 当前阶段→Done。
+
+### 文件所有权
+
+| 文件 | 可写阶段 |
+|---|---|
+| `spec.md` | S1；批准后的需求变更需重走 S3 |
+| `tasks.md` | S2、S4 |
+| `review.md` | **仅 S5**，全新评审上下文；S4 期间只读 |
+| `state.md` | 任何阶段，但只能在阶段切换/任务状态变化时据实更新，不得用它跳过门禁 |
+| `src/`、`tests/` | 仅 S4 |
+
+---
+
+## 断点恢复协议（换会话/换 agent 无损续跑）
+
+接手本仓库的任何 AI 代理，在继续任何未完成变更前**必须先执行**：
+
+1. **查索引**：读 `INDEX.md`，找到阶段不是 Done 的条目（多条时按编号从小到大确认）。
+2. **读状态卡**：打开该目录 `state.md`，获取"当前阶段 / 下一动作 / 当前任务 / 交接备注"。
+3. **一致性校验**：对照门禁记录检查实际产物（如 S1 勾选则 spec.md 必须存在且 AC 合法；S4 进行中则 tasks.md 状态与 state.md 当前任务一致）。
+   - 发现矛盾时：**以产物为准**，修正 state.md 后继续，并在交接备注中记录修正。
+4. **从断点续跑**：严格按"下一动作"继续；禁止重走已勾选阶段，禁止跳过未勾选阶段。
+5. **每次推进后写回**：任务状态变化或阶段切换时，立即更新 state.md（含更新时间），保证下次可恢复。
+
+state.md 保持一屏以内；细节证据放 tasks.md / review.md，状态卡只放指针与结论。
+
+---
+
+## 验证词汇：rule 与 rubric
+
+每条 AC/TR 有且仅有一种类型；先验 rule 后验 rubric。
 
 | 类型 | 含义 | 必填形态 |
 |---|---|---|
-| `rule` | 客观二值条件（过/不过） | 可观察的通过条件 + 证据来源（命令、输出、产物） |
-| `rubric` | 质量维度评分 | 维度、1-5 量表、1/3/5 锚点、通过阈值（通常 >= 4）、证据来源 |
-
-- 验证时**先 rule 后 rubric**。
-- rubric 必须记录：得分、理由、证据，三者缺一不可。
+| `rule` | 客观二值条件 | 可观察通过条件 + 证据来源（命令输出、产物、日志） |
+| `rubric` | 质量维度评分 | 维度、1-5 量表、1/3/5 锚点、阈值（通常 ≥4）、证据来源；须记录得分+理由+证据 |
 
 ## 任务状态机
 
-状态只记录在任务的 `Status` 字段中，标题里禁止出现状态标记。
-
 ```text
 pending ──▶ in_progress ──▶ completed
-                │              ▲
-                ├──▶ blocked ──┘（解除后回 in_progress）
-                └──▶ cancelled（必须有用户批准记录）
+                ├──▶ blocked   （须写 Blocked By / Unblock Condition）
+                └──▶ cancelled （须写用户批准证据）
 ```
 
-| 状态 | 附加字段 |
-|---|---|
-| `pending` | 无 |
-| `in_progress` | 无（恢复时清除陈旧的阻塞字段） |
-| `blocked` | `Blocked By` + `Unblock Condition` |
-| `completed` | `Completion Evidence`（rule 结果；rubric 得分/理由/证据） |
-| `cancelled` | `Cancellation Reason` + `Cancellation Approved By` |
-
-本地自验不通过时保持 `in_progress`，**没有 failed 状态**。
+状态只写在 `Status` 字段，标题不嵌状态；自验不通过保持 `in_progress`，没有 failed 状态。
 
 ## 队列清空与完成定义（DoD）
 
-队列清空 = 全部任务/问题 ∈ {completed, cancelled}，且无 pending/in_progress/blocked，且每个 cancelled 有用户批准且不损害 AC 覆盖。
-
-整个需求完成还必须满足：
-
 ```text
-所有必需评审检查点已检查
-每条 rule 有通过证据
-每条 rubric 达阈值并有理由和证据
-最近一轮 Review 结果 == pass
-不存在遗留的 actionable 发现
-```
-
-## 新需求开工步骤
-
-```bash
-# 1. 取号（查 INDEX.md 下一个编号），创建特性目录并复制模板
-cp -R .trae/specs/_templates .trae/specs/0001-your-slug
-# 2. 填写 spec.md（Specify）
-# 3. 填写 tasks.md（Plan），通知用户批准（Approve）
-# 4. 批准后建分支实施：git switch -c spec/0001-your-slug
-# 5. 队列清空后进入 Review，由全新上下文生成 review.md
-# 6. 在 INDEX.md 登记结果
+所有任务/问题 ∈ {completed, 用户批准的 cancelled}
+S1-S5 门禁在 state.md 全部勾选且最近一轮 Review == pass
+每条 rule 有通过证据；每条 rubric 达阈值并有理由和证据
+pytest 全绿、ruff check . 无告警；INDEX 已登记 Done
+无遗留 actionable 发现
 ```
 
 ## 豁免
 
-纯文案订正、依赖补丁、不改行为的格式化等琐碎变更可免规格流程，但需在提交信息中注明 `chore: ...`；拿不准时按有规格处理。
+纯文档订正、依赖补丁、不改行为的格式化等琐碎变更可免五阶段，提交信息注明 `chore:`；拿不准时按需要规格处理。
