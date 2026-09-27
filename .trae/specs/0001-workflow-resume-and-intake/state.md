@@ -6,9 +6,9 @@
 - 类型：fix
 - Slug：workflow-resume-and-intake
 - 分支：fix/0001-workflow-resume-and-intake（注：本需求创建于双轨机制落地前，经用户批准沿用该分支名，等价于新规则的 fix/0001）
-- 当前阶段：Implement
-- 下一动作：完成 Task 6 全量自证与提交，随后进入 S5 由全新上下文独立评审
-- 当前任务：Task 5（in_progress，收尾中）
+- 当前阶段：Review
+- 下一动作：由未参与实施的全新上下文执行独立评审，按检查点取证并出具 R1 结论
+- 当前任务：None（Task 1-6 全部 completed）
 - 更新时间：2026-09-27
 - 交接备注：
   - 本需求为"犬食其言"：0001 目录在新机制建成前手动创建，无历史包袱；基线提交 f26031b 已在 main/develop/fix 三分支同点
@@ -23,7 +23,7 @@
   - Exit：tasks.md 6 个任务依赖有序（Task 1→6），每条 AC 均有任务覆盖，每任务至少一条 TR
 - [x] **S3 Approve** ｜ 完成时间：2026-09-27
   - Exit：用户通过 NotifyUser 明确批准 spec.md 与 tasks.md（含首次基线提交授权）
-- [ ] **S4 Implement** ｜ 完成时间：—
-  - Exit：Task 1-6 全部 completed 且有 Completion Evidence；pytest/ruff 全绿；docs(0001) 提交完成
+- [x] **S4 Implement** ｜ 完成时间：2026-09-27
+  - Exit：Task 1-6 全部 completed 且有 Completion Evidence；pytest 1 passed；零代码改动 ruff 面无变化；实施已提交 6ddd5c4
 - [ ] **S5 Review** ｜ 完成时间：—
   - Exit：review.md R1 由全新上下文出具且 Result = pass；INDEX 登记 Done

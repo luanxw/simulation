@@ -16,7 +16,11 @@
 - **Notes**：首次提交为搭建工作流基础设施所必需，批准本计划即视为批准该提交；不会执行任何 push
 
 ## Task 2：重组模板为 feature/fix 双轨，四件套含状态卡
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-2.1（rule）通过：`find .trae/specs/_templates -type f` 输出 feature/ 与 fix/ 各 4 个文件（spec/tasks/review/state），旧扁平模板 3 文件已删除
+  - TR-2.2（rule）通过：两个 state.md 均 grep 命中全部必填要素（编号/类型/Slug/当前阶段/下一动作/当前任务/更新时间/交接备注/S1-S5）
+  - TR-2.3（rule）通过：fix/spec.md 含"复现步骤""根因分析"章节，fix/tasks.md 含 3 处回归测试要求
 - **Priority**：high
 - **Depends On**：Task 1
 - **Description**：
@@ -81,7 +85,10 @@
   - `rule` TR-5.2：0001/state.md 存在且字段与实际进度一致，INDEX 含 0001 行；证据为文件内容
 
 ## Task 6：自证与提交
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-6.1（rule）通过：TR-1~TR-5 证据已逐条记录；`pytest -q` → 1 passed；`python3 -m py_compile` 对 2 个 .py 文件 OK；本次零 .py/.toml 改动（base anaconda 3.8 未装 ruff，dev 已声明 ruff>=0.6，lint 面零变化）；Markdown 相对链接无 BROKEN；实施提交 6ddd5c4（未 push）
+  - TR-6.2（rubric）自评 4 分（达标）：一句话受理全自动、3 条分类样例、歧义一次询问、续跑四步成文；扣 1 分因关键词分类存在误判可能需人工兜底。最终分以独立 Review 为准
 - **Priority**：medium
 - **Depends On**：Task 5
 - **Description**：

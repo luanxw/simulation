@@ -4,7 +4,7 @@
 
 | 编号 | 类型 | 名称 | 目录 | 分支 | 当前阶段 | 评审结果 | 最后更新 |
 |---|---|---|---|---|---|---|---|
-| 0001 | fix | 工作流断点恢复、严格门禁与智能受理 | [0001-workflow-resume-and-intake](0001-workflow-resume-and-intake/) | fix/0001-workflow-resume-and-intake | Implement | — | 2026-09-27 |
+| 0001 | fix | 工作流断点恢复、严格门禁与智能受理 | [0001-workflow-resume-and-intake](0001-workflow-resume-and-intake/) | fix/0001-workflow-resume-and-intake | Review | — | 2026-09-27 |
 
 **类型**：`feature`（新需求交付）/ `fix`（问题修复），由智能受理按关键词规则判定。
 
