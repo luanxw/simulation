@@ -6,6 +6,7 @@
 - 类型：fix
 - Slug：<slug>
 - 分支：fix/NNNN-<slug>
+- 评审者指定：默认（全新 general_purpose_task 子代理，只读）；用户指定其他 agent 时改写本行（如 browser_use / search）
 - 当前阶段：Specify            <!-- Specify | Plan | Approve | Implement | Review | Done -->
 - 下一动作：[谁在什么时候做什么，如"等待用户批准 spec.md 与 tasks.md"]
 - 当前任务：Task 1（pending）   <!-- 无则写 None -->
@@ -25,3 +26,5 @@
   - Exit：根因已回填；所有任务 ∈ completed/cancelled 且有 Completion Evidence；回归测试红绿成立；pytest 与 ruff 全绿
 - [ ] **S5 Review** ｜ 完成时间：—
   - Exit：review.md 最近一轮 Result = pass；每条 AC 有独立证据；INDEX 已登记最终状态
+- [ ] **S6 Deliver** ｜ 完成时间：—
+  - Exit：S5 最近一轮 pass；review/state/INDEX 终态已自动收尾提交、git status 干净；未 push（等待用户当次确认）

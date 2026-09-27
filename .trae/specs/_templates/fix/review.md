@@ -24,6 +24,7 @@ blocked = 环境/权限/依赖导致无法取证。每轮新增 R2、R3，禁止
 
 ### Review R1
 - **Result**：`pass` | `fail` | `blocked`
+- **Reviewer**：[agent 类型；默认全新 general_purpose_task；用户指定时注明]
 - **Checks Performed**：
   - [执行的检查与命令/动作]
 - **Evidence**：
