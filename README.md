@@ -50,7 +50,7 @@ ruff check .                      # 静态检查
 
 | 你说 | 类型 | 自动产出 |
 |---|---|---|
-| "修复碰撞检测穿模的问题" | fix | `fix/0002-collision-penetration` + fix 四件套 |
+| "修复碰撞检测穿模的问题" | fix | `fix/0002-collision-penetration-fix` + fix 四件套 |
 | "优化仿真主循环帧率" | fix | `fix/0003-...` + fix 四件套 |
 | "给仿真器加暂停按钮" | feature | `feature/0004-...` + feature 四件套 |
 

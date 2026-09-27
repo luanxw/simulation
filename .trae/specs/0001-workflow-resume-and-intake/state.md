@@ -6,8 +6,8 @@
 - 类型：fix
 - Slug：workflow-resume-and-intake
 - 分支：fix/0001-workflow-resume-and-intake（注：本需求创建于双轨机制落地前，经用户批准沿用该分支名，等价于新规则的 fix/0001）
-- 当前阶段：Review
-- 下一动作：R1 fail 的 F-1 已按 Issue I-1 整改完成，由全新上下文开启 R2 独立评审
+- 当前阶段：Done
+- 下一动作：None（0001 全部完成；后续由人工决定何时把 fix/0001 合入 develop/main，工作流不自动合并）
 - 当前任务：None（Task 1-6 + Issue I-1 全部 completed）
 - 更新时间：2026-09-27
 - 交接备注：
@@ -26,5 +26,5 @@
   - Exit：用户通过 NotifyUser 明确批准 spec.md 与 tasks.md（含首次基线提交授权）
 - [x] **S4 Implement** ｜ 完成时间：2026-09-27（R1 fail 后整改 I-1，二次满足）
   - Exit：Task 1-6 与 Issue I-1 全部 completed 且有 Completion Evidence；pytest 1 passed；零代码改动 ruff 面无变化；state/INDEX/tasks/git 四方一致；实施 6ddd5c4、整改见本次提交
-- [ ] **S5 Review** ｜ 完成时间：—
-  - Exit：review.md R1 由全新上下文出具且 Result = pass；INDEX 登记 Done
+- [x] **S5 Review** ｜ 完成时间：2026-09-27
+  - Exit：review.md 最近一轮 R2 由全新上下文出具且 Result = pass；每条 AC 有独立证据；INDEX 已登记 Done / R2 pass
