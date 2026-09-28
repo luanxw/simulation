@@ -8,7 +8,7 @@
 - 分支：feature/NNNN-<slug>
 - 评审者指定：默认（全新 general_purpose_task 子代理，只读）；用户指定其他 agent 时改写本行（如 browser_use / search）
 - 当前阶段：Specify            <!-- Specify | Plan | Approve | Implement | Review | Done -->
-- 下一动作：[谁在什么时候做什么，如"等待用户批准 spec.md 与 tasks.md"]
+- 下一动作：[谁在什么时候做什么，如"进入 S4（S3 已在常驻授权下自动批准）"]
 - 当前任务：Task 1（pending）   <!-- 无则写 None -->
 - 更新时间：YYYY-MM-DD
 - 交接备注：

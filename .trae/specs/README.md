@@ -85,10 +85,10 @@ git switch -c fix/0002-your-slug      # 新需求：feature/NNNN-<slug>
 
 ---
 
-## 六个阶段：严格串行门禁
+## 七个阶段：严格串行门禁
 
 ```text
-S1 Specify → S2 Plan → S3 Approve(自动) → S4 Implement → S5 Review → S6 Deliver → Done
+S1 Specify → S2 Plan → S3 Approve(自动) → S4 Implement → S5 Review → S6 Deliver → S7 Merge → Done
 ```
 
 **铁律：上一阶段 Exit 清单未全部勾选并写入 state.md，不得进入下一阶段。**（S3 在常驻授权下为自动批准，但勾选与留痕动作不能省。）
@@ -132,8 +132,19 @@ S1 Specify → S2 Plan → S3 Approve(自动) → S4 Implement → S5 Review →
   1. 把评审与收尾产物（review.md、state.md、INDEX.md 终态、整改变更）全部提交：Conventional Commit，如 `docs(NNNN): record Rn pass and deliver`；
   2. 确认 `git status` 干净、state.md 当前阶段置 Done 且 S1-S6 全勾选、INDEX 登记 Done 与最终评审轮次；
   3. 输出交付摘要（提交链、评审结论、测试结果）。
-- **确认点**：S6 **只做本地 commit，不 push**。需要推送/建 MR 时，代理明确询问并等待用户**当次**确认后才执行；合并到 develop/main 的时机同样由用户决定。
-- **Exit（= 整个需求完成）**：S1-S6 全勾选；工作区干净；INDEX = Done；无遗留 actionable 发现。
+- **确认点**：S6 **只做本地 commit，不 push**。需要推送/建 MR 时，代理明确询问并等待用户**当次**确认后才执行；push 成功后的建 MR 与返回链接见 S7。
+- **Exit（= 本地交付完成）**：S1-S6 全勾选；工作区干净；INDEX = Done；无遗留 actionable 发现。
+
+### S7 Merge 合并请求（push 成功后建 MR，返回链接）
+- **Entry**：S6 已完成，且用户**当次明确确认**允许 push。
+- **做什么（用户确认 push 后自动执行，无二次停顿）**：
+  1. `git push -u origin <分支名>` 推送到远端；
+  2. **push 成功后自动创建 Merge 请求**：目标分支默认 `develop`（用户当次确认时指定其他目标分支则从其指定）；
+     - 首选 `gh pr create --base develop --title "<type>(NNNN): <简述>" --body "<摘要>"`（GitHub）；
+     - gh 未安装/未登录时**兜底**：输出 GitHub 预填 compare 链接 `https://github.com/<owner>/<repo>/compare/develop...<分支名>?expand=1`，用户点开即是填好的建 PR 页面；其他托管平台（GitLab 等）同理用其 MR 创建工具或预填链接；
+  3. 把 MR 链接返回给用户，并在 state.md 的 S7 勾选处记录链接与创建方式。
+- **边界**：MR/PR 的"合并"按钮由用户自行点击，代理**不代为合并**；push 失败或建 MR 失败时如实报告错误与重试路径，禁止 force-push。
+- **Exit**：远端推送成功、MR 已创建（或已输出预填链接）、链接已返回用户并记录在 state.md。
 
 ### 文件所有权
 
@@ -144,7 +155,7 @@ S1 Specify → S2 Plan → S3 Approve(自动) → S4 Implement → S5 Review →
 | `review.md` | **仅 S5**，评审 agent 创建/修改；S4 及之前不存在（模板除外） |
 | `state.md` | 任何阶段据实更新；不得用它跳过门禁 |
 | `src/`、`tests/` | 仅 S4 |
-| 本地 commit | S4 可随时；S6 强制收尾提交。push 永远需要当次确认 |
+| 本地 commit | S4 可随时；S6 强制收尾提交；S7 推送与建 MR 需用户当次确认 |
 
 ---
 
@@ -194,4 +205,4 @@ S7：push 经用户当次确认后执行；push 成功后已创建 Merge 请求�
 
 ## 豁免
 
-纯文档订正、依赖补丁、不改行为的格式化等琐碎变更可免六阶段，提交信息注明 `chore:`（仍自动提交、不 push）；拿不准时按需要规格处理。
+纯文档订正、依赖补丁、不改行为的格式化等琐碎变更可免七阶段，提交信息注明 `chore:`（仍自动提交、不 push）；拿不准时按需要规格处理。
