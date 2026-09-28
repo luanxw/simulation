@@ -21,7 +21,7 @@
 - [ ] **S2 Plan** ｜ 完成时间：—
   - Exit：tasks.md 含"定位 → 修复+回归 → 自证"主线；每条 AC 至少映射一个任务；每任务至少一条 TR
 - [ ] **S3 Approve** ｜ 完成时间：—
-  - Exit：用户对 spec.md + tasks.md 明确批准（在此记录批准方式与日期）
+  - Exit：常驻授权下自动批准并留痕（记录授权依据与日期）；用户可随时否决→回退对应阶段
 - [ ] **S4 Implement** ｜ 完成时间：—
   - Exit：根因已回填；所有任务 ∈ completed/cancelled 且有 Completion Evidence；回归测试红绿成立；pytest 与 ruff 全绿
 - [ ] **S5 Review** ｜ 完成时间：—

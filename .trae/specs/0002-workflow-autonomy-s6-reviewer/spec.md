@@ -28,8 +28,8 @@
 ## 约束与假设
 - 常驻授权仅限**本项目工作区内**的文件增改与本地 git 操作；不延伸到 push/远端写、工作区外文件、不可逆破坏操作。
 - 0002 沿用 fix/0001-workflow-resume-and-intake 分支（用户 2026-09-27 明确批准的例外，等价于"先在集成分支上连续落地两条工作流修复"）；在 state.md 与 ADR-0003 留痕。
-- 已完成的 0001 不重走流程；六阶段与新字段只对新受理变更强制（0001 保持 Done 原状）。
-- 当前仓库无远端；push 门禁先成文，配置远端后自动生效。
+- 已完成的 0001 不重走流程；七阶段与新字段只对新受理变更强制（0001 保持 Done 原状）。
+- 远端已配置（origin https://github.com/luanxw/simulation.git）；push 门禁、S7 建 MR 规则已写入全部工作流文档，生效不依赖远端配置状态。
 
 ## 验收标准（以回归 rule 为主）
 
@@ -45,7 +45,7 @@
 - **Type**：`rule`
 - **Given（给定）**：工作流 README、AGENTS.md、双轨 state.md 模板
 - **When（当）**：检视阶段定义
-- **Then（则）**：流程为 S1→S6；S6 Entry=S5 最近一轮 pass，动作=自动收尾 commit + state/INDEX 置 Done 且 git status 干净，明确不 push
+- **Then（则）**：流程为 S1→S7；S6 Entry=S5 最近一轮 pass，动作=自动收尾 commit + state/INDEX 置 Done 且 git status 干净，明确不 push
 - **Pass Condition（通过条件）**：三处均含 S6 门禁/条款；模板状态卡含 S6 勾选项
 - **Evidence（证据来源）**：文档与模板 grep
 
@@ -65,11 +65,11 @@
 - **Pass Condition（通过条件）**：字段存在；README 列默认值+至少 2 类可选 agent 场景+三不变
 - **Evidence（证据来源）**：state 模板与 README 内容
 
-### AC-5：双轨模板一致升级为六阶段
+### AC-5：双轨模板一致升级为七阶段
 - **Type**：`rule`
 - **Given（给定）**：_templates/feature 与 _templates/fix
 - **When（当）**：检查四件套
-- **Then（则）**：两套 state.md 均含 S1-S6 六个门禁勾选与评审者指定字段；模板正文无残留"S5 即最终/五阶段完成"与新六阶段冲突的表述
+- **Then（则）**：两套 state.md 均含 S1-S7 七个门禁勾选与评审者指定字段；模板正文无残留"S5 即最终/五阶段完成"与新六阶段冲突的表述
 - **Pass Condition（通过条件）**：grep 两套 state 各含 S6；模板中阶段计数表述一致
 - **Evidence（证据来源）**：find + grep
 
@@ -77,9 +77,17 @@
 - **Type**：`rule`
 - **Given（给定）**：0002 执行全过程
 - **When（当）**：S6 完成后
-- **Then（则）**：实施期无阻断式批准等待（S3 以常驻授权自动通过并留痕）；全部变更已提交、`git status` 干净；未执行任何 push（无 upstream/无远端调用）；state.md 与 INDEX 为 Done + 最终 R 轮次
-- **Pass Condition（通过条件）**：git status 空输出；`git log` 可见各阶段提交；无 push 证据（无远端跟踪分支）；state/INDEX 一致
+- **Then（则）**：实施期无阻断式批准等待（S3 以常驻授权自动通过并留痕）；全部变更已提交、`git status` 干净；未执行任何 push（本需求全程未 push（等待 S7 用户当次确认））；state.md 与 INDEX 为 Done + 最终 R 轮次；S7 本次不执行（等待用户当次确认）
+- **Pass Condition（通过条件）**：git status 空输出；`git log` 可见各阶段提交；无 push 证据（branch 有 upstream 但 0002 提交未推送（ahead 7））；state/INDEX 一致
 - **Evidence（证据来源）**：git 命令输出、state.md、INDEX.md
+
+### AC-8：S7 建 MR 并返回链接成文
+- **Type**：`rule`
+- **Given（给定）**：工作流 README、AGENTS.md、根 README
+- **When（当）**：检视 S7/远端操作条款
+- **Then（则）**：明确"push 成功后自动创建 Merge 请求并把链接返回给用户"；给出 MR 链接的获取路径（优先 `gh pr create`，gh 缺失/未登录时用预填 compare 链接兜底）；目标分支默认 develop；MR 的合并动作不属于本流程（由用户自行点击）
+- **Pass Condition（通过条件）**：三处均有 S7 建 MR + 返回链接条款，且含 gh 优先/compare 兜底
+- **Evidence（证据来源）**：grep 输出
 
 ### AC-7：自主边界的可理解性
 - **Type**：`rubric`

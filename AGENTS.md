@@ -37,9 +37,10 @@
 - **断点恢复**：先读 INDEX → state.md → 校验产物（矛盾以产物与 git 提交为准）→ 按"下一动作"续跑；不重走、不跳阶段。
 - 任务/阶段一变化立即更新 state.md 并尽快提交。
 
-## 3. 提交、S6 交付与唯一确认点（push）
+## 3. 提交、S6/S7 交付与唯一确认点（push）
 
 - **S4 期间可随时做本地 commit；S6 必须自动完成收尾提交**（review/state/INDEX 终态全部入库，`git status` 干净），无需用户确认。
+- **S7 Merge**：用户确认 push 后，推送成功即**自动创建 Merge 请求并把链接返回用户**——优先 `gh pr create --base develop`（gh 缺失/未登录时输出预填 compare 链接兜底）；目标分支默认 develop；**代理不代点合并按钮**。
 - 提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/)：`feat|fix|refactor|test|docs|chore(scope): 简述`，scope 带编号，如 `feat(0003): add pause button`。一个提交只解决一件事。
 - **唯一强制确认点：`git push`、创建 MR/PR 等远端写操作**——必须取得用户**当次**明确确认才执行；S6 只本地提交、不 push。
 - **始终禁止**：未经确认的 push、任何 force-push、`reset --hard`、删除分支、改动工作区外文件（用户措辞随意时也要二次确认命令本身）。
@@ -65,9 +66,9 @@
 
 ## 7. 完成定义（DoD）
 
-- [ ] state.md 中 S1-S6 全部勾选，与 INDEX、tasks.md、review.md 实际内容一致；
+- [ ] state.md 中 S1-S7 全部勾选（S7 在用户当次确认 push 后执行），与 INDEX、tasks.md、review.md 实际内容一致；
 - [ ] 最近一轮独立 Review 为 `pass`，每条 rule 有通过证据、每条 rubric 达阈值（含得分与理由）；
 - [ ] `pytest` 全绿、`ruff check .` 无告警；
 - [ ] 无 pending/in_progress/blocked，completed 均有 Completion Evidence；
 - [ ] S6 收尾提交完成、`git status` 干净、INDEX 登记 Done；
-- [ ] 难逆转决策已写 ADR；push/合并已取得用户当次确认或明确暂缓。
+- [ ] 难逆转决策已写 ADR；push/合并已取得用户当次确认或明确暂缓；若已 push，MR 链接已返回用户。
