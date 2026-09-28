@@ -78,3 +78,33 @@
 - **Acceptance Criteria Addressed**：AC-1、AC-2、AC-3、AC-4、AC-5
 - **Test Requirements**：
   - `rule` TR-5.1：pytest 1 passed、零 .py 改动、链接无 BROKEN、各 grep 项通过；证据为命令输出
+
+
+---
+
+# R1 评审整改（2026-09-28）
+
+## Issue I-1：spec.md 修订补全
+- **Status**：`completed`
+- **Priority**：high
+- **Completion Evidence**：spec.md 已含 AC-8；AC-2 改 S1→S7、AC-5 改七阶段；远端假设更正为 origin 已配置；AC-6 表述改为"0002 提交未推送（ahead）"。提交 ae69a56。
+
+## Issue I-2：AGENTS.md 补 S7 条款
+- **Status**：`completed`
+- **Priority**：high
+- **Completion Evidence**：§3 标题改"S6/S7"并新增 S7 Merge 条款（gh pr create 优先/compare 兜底/目标 develop/不代合并）；§7 DoD 改 S1-S7 并含 MR 链接返回项。提交 ae69a56。
+
+## Issue I-3：工作区未提交修改处理
+- **Status**：`completed`
+- **Priority**：high
+- **Completion Evidence**：根因为工具层回滚导致 59cc361 提交视图陈旧（spec.md 仅进 +1/-1 行）；非并发修改。已将工作区修改核实后纳入 ae69a56 正规提交，git status 恢复干净。流程教训已写入 review.md F-3 与 ADR 待办。
+
+## Issue I-4：模板 S3 Exit 改自动批准语义
+- **Status**：`completed`
+- **Priority**：medium
+- **Completion Evidence**：双轨 _templates/*/state.md S3 Exit 均改为"常驻授权下自动批准并留痕；用户可随时否决→回退对应阶段"。提交 ae69a56。
+
+## Issue I-5：fix/spec.md 阶段计数
+- **Status**：`completed`
+- **Priority**：low
+- **Completion Evidence**：_templates/fix/spec.md"六阶段"改"七阶段"。提交 ae69a56。

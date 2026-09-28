@@ -8,11 +8,12 @@
 - 分支：fix/0001-workflow-resume-and-intake（**例外**：用户 2026-09-27 明确批准沿用，不新建分支；正常规则仍为一律从 develop 切 fix/feature 分支）
 - 评审者指定：默认（全新 general_purpose_task 子代理，只读）；用户未指定其他 agent
 - 当前阶段：Review
-- 下一动作：派全新 general_purpose_task 子代理执行 S5 新 R1 评审（只读），检查点覆盖 AC-1~AC-8；fail 则落 Issue 回 S4
-- 当前任务：S5 Review R1（新轮次，进行中）
+- 下一动作：派**另一名**全新 general_purpose_task 子代理执行 S5 R2 评审（只读），检查点 CP-1~CP-8 覆盖 AC-1~8
+- 当前任务：S5 Review R2（进行中）
 - 更新时间：2026-09-27
 - 交接备注：
   - 2026-09-28 需求变更：新增 push 成功后创建 MR 并返回链接（原 S6 Deliver 不 push；新增 S7 Merge 等待用户确认）
+  - R1（2026-09-28，全新子代理）= fail：F-1/F-2 系工具层回滚导致提交不完整（59cc361 spec 仅 +1/-1），已核实整改（ae69a56）；F-4/F-5 模板残留已修；教训：每次提交后须以 git show --stat 复核
   - 用户已授予项目级常驻授权：工作区内增改免逐次确认，S3 自动批准；唯一强制确认点是 push
   - 受理时四个边界已一次问清（免确认含 S3／分支例外／S6 自动提交不 push／评审者可预先指定）
   - 0002 改的是工作流自身文件，全部为 Markdown；与 0001 同分支连续落地，提交 scope 用 docs(0002)
@@ -31,8 +32,8 @@
   - Exit：用户常驻授权下自动通过；spec/tasks 已修订补充 AC-8/S7/远端信息
 - [x] **S4 Implement（修订）** ｜ 完成时间：2026-09-28
   - Exit：Task 1-6 全部 completed 且有 Completion Evidence；pytest 1 passed；七阶段改造 grep 项通过、链接无死链；提交 2691cdd
-- [ ] **S5 Review（新 R1）** ｜ 完成时间：—
-  - Exit：review.md 由全新上下文出具，按新 CP-1~CP-8 检查 AC-1~8；最近一轮 Result = pass
+- [ ] **S5 Review** ｜ 完成时间：—（R1 fail 已整改，R2 进行中）
+  - Exit：review.md 由全新上下文出具，按 CP-1~CP-8 检查 AC-1~8；最近一轮 Result = pass
 - [ ] **S6 Deliver** ｜ 完成时间：—
   - Exit：全部收尾变更自动 commit、git status 干净、state/INDEX 置 Done；**不 push**（等待用户当次确认）
 - [ ] **S7 Merge** ｜ 完成时间：—
