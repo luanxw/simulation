@@ -53,6 +53,20 @@
   - `rule` TR-4.1：AGENTS/README/ADR 更新点全部落地且相对链接无死链；证据为内容检查
   - `rubric` TR-4.2：自主边界可理解性 1-5，anchors 见 AC-7，threshold >= 4，评审者评分
 
+## Task 6：S7 建 MR 条款落地（2026-09-28 需求变更增补）
+- **Status**：`pending`
+- **Priority**：high
+- **Depends On**：Task 4
+- **Description**：
+  - 工作流 README：六阶段流程图改七阶段；新增 S7 Merge 小节（Entry=用户当次确认 push；动作=push → 成功后建 MR 并返回链接，`gh pr create` 优先 / compare 链接兜底，目标分支默认 develop；合并按钮由用户自行点击）；DoD/文件所有权同步
+  - AGENTS.md：第 3 节补 S7 条款；DoD 六阶段→七阶段（S7 单独列，标注"需用户当次确认后执行"）
+  - 根 README：流程图改七阶段，S6 条后补 S7 说明
+  - 双轨 state.md 模板：门禁区 S1-S6 扩为 S1-S7（S7 Merge 勾选含 MR 链接）
+  - ADR-0003 增补 S7 决策段落（正文体不改已 Accepted 的历史表述，追加"2026-09-28 补充"段）
+- **Acceptance Criteria Addressed**：AC-2、AC-8
+- **Test Requirements**：
+  - `rule` TR-6.1：工作流 README/AGENTS.md/根 README 三处 grep 到 S7 与"返回.*链接"，双轨 state.md 模板各含 S7 勾选项；证据为 grep
+
 ## Task 5：S4 自证与提交
 - **Completion Evidence**：`PYTHONPATH=src pytest -q` = 1 passed（1 warning 为 pytest6 对 pythonpath 配置的已知无害警告）；零 .py 改动，lint 面无变化（ruff>=0.6 已在 dev 依赖声明）；AC-1~5 grep 全通过、旧表述 CLEAN、链接无死链；主体提交 93c7c8d（intake 7307aff 之后）。
 - **Status**：`completed`
