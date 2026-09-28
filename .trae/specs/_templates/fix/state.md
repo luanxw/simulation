@@ -28,3 +28,5 @@
   - Exit：review.md 最近一轮 Result = pass；每条 AC 有独立证据；INDEX 已登记最终状态
 - [ ] **S6 Deliver** ｜ 完成时间：—
   - Exit：S5 最近一轮 pass；review/state/INDEX 终态已自动收尾提交、git status 干净；未 push（等待用户当次确认）
+- [ ] **S7 Merge** ｜ 完成时间：—
+  - Exit：用户当次确认后 push 成功；Merge 请求已创建（gh 优先 / compare 链接兜底）并把链接返回用户、记录于此：____；合并按钮由用户自行点击

@@ -54,17 +54,18 @@ ruff check .                      # 静态检查
 | "优化仿真主循环帧率" | fix | `fix/0003-...` + fix 模板 |
 | "给仿真器加暂停按钮" | feature | `feature/0004-...` + feature 模板 |
 
-## 六个阶段：完成一个才能进下一个
+## 七个阶段：完成一个才能进下一个
 
 ```text
-S1 Specify → S2 Plan → S3 Approve(自动) → S4 Implement → S5 Review → S6 Deliver → Done
-  澄清需求     拆解任务     常驻授权自动过     写代码自证     独立评审(agent可选)   自动收尾提交
+S1 Specify → S2 Plan → S3 Approve(自动) → S4 Implement → S5 Review → S6 Deliver → S7 Merge → Done
+  澄清需求     拆解任务     常驻授权自动过     写代码自证     独立评审(agent可选)   自动收尾提交   push后建MR返链接
 ```
 
 - 每个阶段有明确的 Entry/Exit 清单（见 [`.trae/specs/README.md`](.trae/specs/README.md)）；**上一阶段 Exit 未在 `state.md` 全部勾选，不得进入下一阶段**。
 - **常驻授权**：项目内的增改、本地提交、S3 批准都不需要你逐次确认——AI 会把规格/计划摘要发给你后直接继续；你可以**随时打断或否决**，否决即回退到对应阶段。
 - **S5 评审者可选**：默认是没参与实施的全新独立子代理；你也可以提前指定其他类型的 agent（如浏览器实测、跨模块检索），记在 state.md 即可。`pass` 是唯一完成出口，fail 自动落整改任务回炉。
 - **S6 自动收尾**：评审通过后自动提交全部产物并置 Done；**只有 `git push`（或建 MR）前会停下来等你当次确认**。force-push、reset --hard 始终禁止。
+- **S7 建 MR 返链接**：你确认 push 后，推送成功即自动创建 Merge 请求（gh 优先，无 gh 时输出预填 compare 链接兜底），并把链接返回给你；合并按钮由你自己点。
 
 ## 中断了怎么办：断点续跑
 
@@ -79,14 +80,14 @@ S1 Specify → S2 Plan → S3 Approve(自动) → S4 Implement → S5 Review →
 
 ## 完成定义（DoD 自查）
 
-- [ ] state.md 中 S1-S6 全部勾选且与 INDEX、tasks.md、review.md 一致；
+- [ ] state.md 中 S1-S7 全部勾选且与 INDEX、tasks.md、review.md 一致；
 - [ ] 最近一轮独立 Review 为 `pass`，每条 rule 有通过证据、每条 rubric 达阈值；
 - [ ] `pytest` 全绿、`ruff check .` 无告警，新增行为（含修复）有测试；
 - [ ] S6 已自动收尾提交、工作区干净、INDEX 登记 Done；难逆转的决策已记入 `docs/adr/`；
-- [ ] push/合并已取得当次确认或明确暂缓。
+- [ ] push/合并已取得当次确认或明确暂缓；若已 push，Merge 请求链接已返回。
 
 ## 参考文档
 
-- [`.trae/specs/README.md`](.trae/specs/README.md)：工作流权威细则（受理规则、六阶段 Entry/Exit、常驻授权、恢复协议、评审契约）
+- [`.trae/specs/README.md`](.trae/specs/README.md)：工作流权威细则（受理规则、七阶段 Entry/Exit、常驻授权、恢复协议、评审契约、S7 建 MR）
 - [`AGENTS.md`](AGENTS.md)：人与 AI 协作铁律（文件所有权、分支提交、代码约定）
 - [`docs/adr/README.md`](docs/adr/README.md)：如何写架构决策记录

@@ -18,9 +18,9 @@
 - **用户随时可否决**：收到否决立即停手并回退到对应阶段（需求问题回 S1/S2；评审问题发起新一轮 S5），在交接备注记录。
 - 纯文档订正、依赖升级、格式化等零行为变更可豁免流程，提交信息用 `chore:`。
 
-## 2. 六阶段门禁与文件所有权
+## 2. 七阶段门禁与文件所有权
 
-严格串行：**S1 Specify → S2 Plan → S3 Approve(自动) → S4 Implement → S5 Review → S6 Deliver**。上一阶段 Exit 未在 state.md 全部勾选，不得进入下一阶段。
+严格串行：**S1 Specify → S2 Plan → S3 Approve(自动) → S4 Implement → S5 Review → S6 Deliver → S7 Merge**。上一阶段 Exit 未在 state.md 全部勾选，不得进入下一阶段。
 
 | 文件/目录 | 谁能改、什么时候改 |
 |---|---|
