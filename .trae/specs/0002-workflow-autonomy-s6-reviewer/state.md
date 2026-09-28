@@ -7,9 +7,9 @@
 - Slug：workflow-autonomy-s6-reviewer
 - 分支：fix/0001-workflow-resume-and-intake（**例外**：用户 2026-09-27 明确批准沿用，不新建分支；正常规则仍为一律从 develop 切 fix/feature 分支）
 - 评审者指定：默认（全新 general_purpose_task 子代理，只读）；用户未指定其他 agent
-- 当前阶段：Implement
-- 下一动作：执行 Task 6（S7 建 MR 条款落地），完成后进入新 R1 评审
-- 当前任务：Task 6（in_progress）
+- 当前阶段：Review
+- 下一动作：派全新 general_purpose_task 子代理执行 S5 新 R1 评审（只读），检查点覆盖 AC-1~AC-8；fail 则落 Issue 回 S4
+- 当前任务：S5 Review R1（新轮次，进行中）
 - 更新时间：2026-09-27
 - 交接备注：
   - 2026-09-28 需求变更：新增 push 成功后创建 MR 并返回链接（原 S6 Deliver 不 push；新增 S7 Merge 等待用户确认）
@@ -29,8 +29,8 @@
   - Exit：Task 1-6 全部 completed 且有 Completion Evidence；pytest 全绿；七阶段改造 grep 项通过
 - [x] **S3 Approve（修订重批）** ｜ 完成时间：2026-09-28（自动批准）
   - Exit：用户常驻授权下自动通过；spec/tasks 已修订补充 AC-8/S7/远端信息
-- [ ] **S4 Implement（修订）** ｜ 完成时间：—
-  - Exit：Task 1-6 全部 completed 且有 Completion Evidence；pytest 全绿；七阶段改造 grep 项通过
+- [x] **S4 Implement（修订）** ｜ 完成时间：2026-09-28
+  - Exit：Task 1-6 全部 completed 且有 Completion Evidence；pytest 1 passed；七阶段改造 grep 项通过、链接无死链；提交 2691cdd
 - [ ] **S5 Review（新 R1）** ｜ 完成时间：—
   - Exit：review.md 由全新上下文出具，按新 CP-1~CP-8 检查 AC-1~8；最近一轮 Result = pass
 - [ ] **S6 Deliver** ｜ 完成时间：—

@@ -54,7 +54,8 @@
   - `rubric` TR-4.2：自主边界可理解性 1-5，anchors 见 AC-7，threshold >= 4，评审者评分
 
 ## Task 6：S7 建 MR 条款落地（2026-09-28 需求变更增补）
-- **Status**：`pending`
+- **Completion Evidence**：工作流 README 改七阶段（流程图含 S7 Merge、S7 小节 Entry/动作/边界/Exit、文件所有权与 DoD 同步）；AGENTS.md 第 3 节补 S7 条款、DoD 七阶段；根 README 流程图七阶段+S7 说明；双轨 state.md 模板加 S7 Merge 门禁（含链接记录位）；ADR-0003 追加"补充：S7 Merge（2026-09-28）"段。提交 2691cdd。
+- **Status**：`completed`
 - **Priority**：high
 - **Depends On**：Task 4
 - **Description**：
