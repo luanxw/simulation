@@ -7,9 +7,9 @@
 - Slug：workflow-autonomy-s6-reviewer
 - 分支：fix/0001-workflow-resume-and-intake（**例外**：用户 2026-09-27 明确批准沿用，不新建分支；正常规则仍为一律从 develop 切 fix/feature 分支）
 - 评审者指定：默认（全新 general_purpose_task 子代理，只读）；用户未指定其他 agent
-- 当前阶段：Review
-- 下一动作：派全新 general_purpose_task 子代理执行 S5 R3 评审（只读），重点复核 F-1 恢复是否真实落盘（git show/diff 取证）+ 全部 CP-1~CP-8
-- 当前任务：S5 Review R3（进行中）
+- 当前阶段：Done（S6 已完成，等待用户确认 push 进入 S7）
+- 下一动作：等待用户当次确认 push；确认后执行 S7（push → 建 MR → 返回链接）
+- 当前任务：S7 Merge（待用户确认 push）
 - 更新时间：2026-09-27
 - 交接备注：
   - 2026-09-28 需求变更：新增 push 成功后创建 MR 并返回链接（原 S6 Deliver 不 push；新增 S7 Merge 等待用户确认）
@@ -33,8 +33,8 @@
   - Exit：用户常驻授权下自动通过；spec/tasks 已修订补充 AC-8/S7/远端信息
 - [x] **S4 Implement（修订）** ｜ 完成时间：2026-09-28
   - Exit：Task 1-6 全部 completed 且有 Completion Evidence；pytest 1 passed；七阶段改造 grep 项通过、链接无死链；提交 2691cdd
-- [ ] **S5 Review** ｜ 完成时间：—（R1/R2 fail 均已整改，R3 进行中）
-  - Exit：review.md 由全新上下文出具，按 CP-1~CP-8 检查 AC-1~8；最近一轮 Result = pass
+- [x] **S5 Review** ｜ 完成时间：2026-09-28
+  - Exit：R3（全新 general_purpose_task）= pass；CP-1~8 全通过、rubric 5/5、无 Findings
 - [ ] **S6 Deliver** ｜ 完成时间：—
   - Exit：全部收尾变更自动 commit、git status 干净、state/INDEX 置 Done；**不 push**（等待用户当次确认）
 - [ ] **S7 Merge** ｜ 完成时间：—

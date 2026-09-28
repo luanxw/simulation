@@ -81,3 +81,28 @@
 - I-6（high）：以 `git show 2691cdd:.trae/specs/README.md` 恢复七阶段版；提交后必须用 git show --stat + git diff 复核 → 已落实（提交见 tasks.md I-6，diff 2691cdd..HEAD 对该文件净 diff 为 0）
 - I-7（medium）：根 README 补"目标分支默认 develop" → 已落实
 - I-8（low）：模板占位示例改自动批准语义 → 已落实
+
+
+### Review R3
+- **Result**：`pass`
+- **Reviewer**：general_purpose_task（全新上下文，R3）
+- **日期**：2026-09-28
+
+#### Checkpoint Results
+
+| CP | 映射 AC | 结果 | 证据 |
+|---|---|---|---|
+| CP-1 | AC-1 | pass | AGENTS.md §1.2 三要素齐；旧 S3 门禁批准表述 grep 零命中 |
+| CP-2 | AC-2 | pass | 工作流 README L88"七个阶段"+L91 含 S7 链图+L138 S7 Merge 小节；AGENTS/根 README/双模板 S6+S7 齐 |
+| CP-3 | AC-3 | pass | 三处 push 当次确认 + force-push/reset --hard 禁止在 |
+| CP-4 | AC-4 | pass | 模板评审者指定字段含默认值；README S5 列 browser_use/search + 三不变 |
+| CP-5 | AC-5 | pass | 双轨 S1-S7 齐；模板目录无五/六阶段残留；S3 Exit 已自动批准语义；占位示例已改 |
+| CP-6 | AC-6 | pass | git working tree clean；0002 提交链 11 个未推送（upstream 系 0001 期历史 push）；state/INDEX 一致 |
+| CP-7 | AC-7（rubric） | pass 5/5 | §1.2/§3/§7 三类边界一目了然且有阶段位置、§2/§3/§7 自洽——锚点 5 |
+| CP-8 | AC-8 | pass | 工作流 README S7 小节/AGENTS §3/根 README 三处含建 MR 返链接+gh 优先/compare 兜底/目标 develop/不代合并 |
+
+#### Findings
+无。R1/R2 全部 8 条 Issue 经整改已落实并经 git diff 复核；工具层回滚教训已通过 `git show 2691cdd` 恢复 + `git diff` 净 diff=0 复核方式落实。
+
+#### Recommended Issues
+无（本评审 pass）。
