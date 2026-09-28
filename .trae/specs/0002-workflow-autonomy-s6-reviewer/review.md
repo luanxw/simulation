@@ -50,3 +50,34 @@
 - I-3（high）：工作区未提交修改核实后纳入正规提交，恢复干净 → 已落实（提交 ae69a56）
 - I-4（medium）：模板 S3 Exit 改自动批准语义 → 已落实
 - I-5（low）：fix/spec.md"六阶段"改"七阶段" → 已落实
+
+
+### Review R2
+- **Result**：`fail`
+- **Reviewer**：general_purpose_task（全新上下文，R2）
+- **日期**：2026-09-28
+
+#### Checkpoint Results
+
+| CP | 映射 AC | 结果 | 证据 |
+|---|---|---|---|
+| CP-1 | AC-1 | pass | AGENTS.md §1.2 与工作流 README 授权表三要素齐；旧强制表述零命中 |
+| CP-2 | AC-2 | fail | 工作流 README 阶段定义区被整改提交 ae69a56 静默回滚为六阶段（L88 标题/链图止于 S6/无 S7 小节），与同文导语和 DoD 自相矛盾 |
+| CP-3 | AC-3 | pass | 三处 push 当次确认条款齐；force-push/reset --hard 禁止在 |
+| CP-4 | AC-4 | pass | 模板字段+默认值+browser_use/search 场景+三不变齐 |
+| CP-5 | AC-5 | pass | 双模板 S1-S7 齐、S3 Exit 已自动批准语义、模板目录无五/六阶段残留 |
+| CP-6 | AC-6 | pass | git status 干净；0002 提交链 9 个完整未推送（远程 head=3ea17cf 系 0001 期历史 push）；state/INDEX 一致 |
+| CP-7 | AC-7（rubric） | pass 5/5 | AGENTS.md §1.2/§3/§7 三类边界自洽、阶段锚点明确；R1 的 §2/§7 矛盾已消除 |
+| CP-8 | AC-8 | fail | 工作流 README 的 S7 Merge 小节被 ae69a56 回滚丢失；根 README 缺"目标分支默认 develop" |
+
+#### Findings
+
+- **F-1（major）**：ae69a56 整改时基于陈旧文件视图写回，把 2691cdd 的工作流 README 七阶段改动整体回滚（R1 F-3 同类工具层问题复发）；tasks.md Task 6 证据未经 git show 复核。
+- **F-2（minor）**：根 README S7 条缺"目标分支默认 develop"。
+- **F-3（minor）**：双轨模板 state.md"下一动作"占位示例仍为人工批准语义。
+
+#### Recommended Issues
+
+- I-6（high）：以 `git show 2691cdd:.trae/specs/README.md` 恢复七阶段版；提交后必须用 git show --stat + git diff 复核 → 已落实（提交见 tasks.md I-6，diff 2691cdd..HEAD 对该文件净 diff 为 0）
+- I-7（medium）：根 README 补"目标分支默认 develop" → 已落实
+- I-8（low）：模板占位示例改自动批准语义 → 已落实

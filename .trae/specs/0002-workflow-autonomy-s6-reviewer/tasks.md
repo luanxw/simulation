@@ -108,3 +108,23 @@
 - **Status**：`completed`
 - **Priority**：low
 - **Completion Evidence**：_templates/fix/spec.md"六阶段"改"七阶段"。提交 ae69a56。
+
+
+---
+
+# R2 评审整改（2026-09-28）
+
+## Issue I-6：恢复工作流 README 七阶段定义区
+- **Status**：`completed`
+- **Priority**：high
+- **Completion Evidence**：`git show 2691cdd:.trae/specs/README.md` 恢复（含"七个阶段"标题、S7 链图、S7 Merge 小节、DoD S1-S7、豁免七阶段）；提交后复核：`git diff 2691cdd..HEAD -- .trae/specs/README.md` 输出 0 行、`git show --stat HEAD` 与 `git status` 干净，落实 R1 F-3 教训。
+
+## Issue I-7：根 README 补目标分支
+- **Status**：`completed`
+- **Priority**：medium
+- **Completion Evidence**：README.md L68 S7 条已含"目标分支默认 develop"。
+
+## Issue I-8：模板占位示例语义
+- **Status**：`completed`
+- **Priority**：low
+- **Completion Evidence**：双轨 _templates/*/state.md L11 改为"进入 S4（S3 已在常驻授权下自动批准）"。
