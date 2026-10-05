@@ -16,6 +16,7 @@
 - **Test Requirements**：
   - `rule` TR-1.1：ADR 存在且状态 Accepted，含 ≥2 候选对比；PoC 运行日志含三传感器数据流与时间戳；证据为文件与日志
 - **Notes**：选型属难逆转决策，必须走 ADR（AGENTS.md §2）
+- **Progress（2026-10-05）**：候选调研完成（Isaac Sim / gz-sim / 自研 / CARLA 四路线），`docs/adr/0003-sim-engine-selection.md` 已建立（状态 **Proposed**：推荐 gz-sim 主引擎 + 自研超声插件 + Isaac Sim 离线对标）。待 PoC 三项门禁（30 min 三流、5 次哈希一致、边角材质抽查）通过后转 Accepted 并推进 Task 7。
 
 ## Task 2：GT 取证框架与 seed/配置中心
 - **Status**：`pending`
