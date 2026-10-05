@@ -34,6 +34,12 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.per-file-ignores]
+# obstacles.py 为 50 项障碍物规格数据行（中文五要素+距离档），拆行反而破坏可读性
+"src/simulation/obstacles.py" = ["E501"]
+# make_diagrams.py 为设计图生成脚本（中文标签数据密集），同理豁免长行
+"scripts/make_diagrams.py" = ["E501"]
+
 [tool.coverage.run]
 source = ["src/simulation"]
 branch = true

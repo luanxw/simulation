@@ -1,0 +1,110 @@
+# 仿真测试判定阈值——全部 rule 门禁的唯一数值来源（对应 spec 0002 第 4/5 章）。
+# 文档-配置一致性由 tests/test_config_consistency.py 强制核验。
+version: 1
+spec_ref: .trae/specs/0002-mower-sensor-sim-test-plan/spec.md
+
+sampling:                     # 2.4 默认采样计划下限
+  static_frames_min: 200
+  dynamic_encounters_min: 20
+  seed_repeats_min: 3
+  default_seeds: [11, 22, 33]
+  safety_repeats: 3
+  safety_seed_variants: 2
+  ring_frames_per_point: 100
+  ring_positions: 72
+
+sensor_envelope:              # 与 sensor_params.yaml 一致性由测试核验
+  lidar: {near_ground_min_m: 0.67, range_min_m: 0.1}
+  ultrasonic: {range_max_m: 1.5, range_min_m: 0.05}
+  camera: {zmin_m: 0.2, zmax_m: 4.0}
+
+p1_to_matrix_mapping:         # P-1 通用档 -> 3.8 矩阵执行档
+  0.75: 0.8
+  1.2: [1.0, 1.5]
+
+classification:               # TC-F-01 分类清单（10 类，安全类 = 前 4）
+  classes:
+    - 人（成人/儿童）
+    - 动物
+    - 车辆（球车/工程车）
+    - 同型机器人
+    - 细杆类（旗杆/桩/栏/警戒带）
+    - 网面/栅栏类
+    - 球类
+    - 软物/可碾压候选
+    - 地形障碍（沙坑/水/沟/台阶/洞杯）
+    - 其他刚体（箱/凳/石/设备）
+  safety_class_count: 4
+  diag_min: 0.90              # 混淆矩阵对角下限
+  safety_misclass_max: 0
+
+degradation_envelope:         # TC-F-08 七组合降级包线
+  - {combo: disable_lidar,        overall_min: 0.75, safety_min: 0.90, extra: {"细杆类": 0.70}}
+  - {combo: disable_ultrasonic,   overall_min: 0.92, safety_min: 0.95, extra: {"低矮目标": 0.60, "负障碍": 0.85}}
+  - {combo: disable_camera,       overall_min: 0.92, safety_min: 0.95, extra: {}}
+  - {combo: only_ultrasonic,      overall_min: null, safety_min: 0.90, extra: {"适用范围": "@<=0.8m"}}
+  - {combo: only_camera,          overall_min: null, safety_min: 0.90, extra: {"适用范围": "侧向视场内"}}
+  - {combo: only_lidar,           overall_min: 0.85, safety_min: 0.90, extra: {"低矮目标": 0.60, "负障碍": 0.85}}
+  - {combo: single_side_camera,   overall_min: null, safety_min: null, extra: {"同侧下降pp": 5, "对侧下降pp": 1}}
+
+suites:
+  L:
+    TC-L-01: {archetype: accuracy, systematic_mm_max: 30, sigma_mm_max: 15, r2_min: 0.999}
+    TC-L-02: {archetype: angular, sep_rate_min: 1.0, angular_err_deg_max: 0.5}
+    TC-L-03: {archetype: range_edges, blind_zone_max_m: 0.10, range_max_min_m: 30.0}
+    TC-L-04: {archetype: reflectivity, black_5m_min: 0.98, ghost_max: 0, white_drop_max: 0}
+    TC-L-05: {archetype: detection, flag_le3m_min: 0.98, flag_5m_min: 0.90, tape_2m_min: 0.85}
+    TC-L-06: {archetype: detection, ball_1m_min: 0.80, ball_2m_min: 0.90, sprinkler_1m_min: 0.90,
+              slope_false_max: 0, lip_08m_min: 0.99}
+    TC-L-07: {archetype: detection, net_rate_min: 0.95, wire_rate_min: 0.90, separation_max_fail: 0}
+    TC-L-08: {archetype: motion, drift_p95_mm_max: 50, dyn_pos_err_mm_max: 100, dyn_vel_err_max_ms: 0.3,
+              mount_stability_deg_max: 0.5}
+    TC-L-09: {archetype: env_robust, decay_pp_max: 5, blind_s_max: 0.5, fog50_5m_min: 0.90}
+    TC-L-10: {archetype: integrity, drop_rate_max: 0.001, rate_hz: 10, rate_tol: 0.05, ts_dev_ms_max: 5}
+    TC-L-11: {archetype: census, sensor: L, pass_rate_min: 1.0}
+  U:
+    TC-U-01: {archetype: accuracy, systematic_mm_max: 15, sigma_mm_max: 8}
+    TC-U-02: {archetype: beam, in10_rate_min: 0.95, beam_dev_deg_max: 3, dual_ghost_max: 0}
+    TC-U-03: {archetype: detection, pole25_05_min: 0.95, flag_05_min: 0.90, ball_03_min: 0.90,
+              ball_05_min: 0.80, sprinkler_03_min: 0.95, hose_03_min: 0.90, ladder_03_min: 0.85}
+    TC-U-04: {archetype: detection, soft_05_min: 0.90}
+    TC-U-05: {archetype: beam, false_dist_max: 0, curve_required: true}
+    TC-U-06: {archetype: crosstalk, fp_rate_max: 0.01}
+    TC-U-07: {archetype: temperature, err_pct_max: 1.0, temps_c: [5, 15, 25, 35]}
+    TC-U-08: {archetype: drive_fp, false_echo_per_10min_max: 2}
+    TC-U-09: {archetype: drive_fp, fp_rate_max: 0.01, misstop_per_100m_max: 1}
+    TC-U-10: {archetype: dynamic, update_delay_ms_max: 50}
+    TC-U-11: {archetype: ring, positions: 72, pass_positions_min: 71}
+    TC-U-12: {archetype: census, sensor: U, pass_rate_min: 1.0}
+  C:
+    TC-C-01: {archetype: accuracy, z_abs_mm: 30, z_pct: 0.025}
+    TC-C-02: {archetype: range_edges, invalid_below_m: 0.2, valid_rate_at_zmin_min: 0.95}
+    TC-C-03: {archetype: texture, false_obstacle_max: 0, edge_target_min: 0.90}
+    TC-C-04: {archetype: detection, goalpost_3m_min: 0.98, corner_2m_min: 0.90, wire_2m_min: 0.85,
+              pole25_2m_min: 0.95, pole50_3m_min: 0.98, flag_2m_min: 0.90}
+    TC-C-05: {archetype: env_robust, tier_rate_min: 0.90, decay_pp_max: 10, backlight_min: 0.85,
+              step_recovery_s_max: 1.0, step_recovery_rate_min: 0.90}
+    TC-C-06: {archetype: motion, self_decay_pp_max: 5, dyn_z_err_pct: 0.10, dyn_abs_mm: 50, gap_frames_max: 3}
+    TC-C-07: {archetype: sync, lr_ts_ms_max: 1.0, disparity_res_px_max: 0.5}
+    TC-C-08: {archetype: contamination, false_per_min_max: 2}
+    TC-C-09: {archetype: coverage, coverage_min: 0.90, handoff_min_m: 0.7, handoff_max_m: 1.5}
+    TC-C-10: {archetype: census, sensor: C, pass_rate_min: 1.0}
+  F:
+    TC-F-01: {archetype: target_level, pos_abs_mm: 50, size_pct: 0.10, size_abs_mm: 50,
+              diag_min: 0.90, safety_misclass_max: 0}
+    TC-F-02: {archetype: completeness, margin_pp: 2, avg_min: 0.95, safety_min: 0.98}
+    TC-F-03: {archetype: fp, false_obstacle_per_km_max: 2, false_estop_per_km_max: 1}
+    TC-F-04: {archetype: complementary, margin_pp: 2, dom_label_rate_min: 0.95}
+    TC-F-05: {archetype: conflict, isolate_s_max: 2, ghost_max: 0}
+    TC-F-06: {archetype: tracking, id_switch_per50_max: 1, vel_err_max_ms: 0.2, heading_err_deg_max: 10,
+              stable_track_ms_max: 300}
+    TC-F-07: {archetype: popout, frames_max: 3, rate_min: 0.95, collision_max: 0}
+    TC-F-08: {archetype: degradation, freeze_s_max: 1.0}
+    TC-F-09: {archetype: safety_static, collision_max: 0, clearance_mm_at_03: 50, clearance_mm_at_08: 50,
+              clearance_mm_at_16: 100, trigger_sigma_mm_max: 30, speeds_ms: [0.3, 0.8, 1.6]}
+    TC-F-10: {archetype: safety_dynamic, collision_max: 0, estop_per_km_max: 1, rel_speed_max_ms: 8.0}
+    TC-F-11: {archetype: latency, fusion_p95_ms_max: 200, safety_p95_ms_max: 250,
+              dense_fusion_p95_ms_max: 240, dense_safety_p95_ms_max: 300}
+    TC-F-12: {archetype: coverage_grid, miss_max: 0, ring_m: [0.5, 1.5], step_deg: 15,
+              heights_mm: [50, 150, 300, 600, 1200]}
+    TC-F-13: {archetype: determinism, reruns: 5}

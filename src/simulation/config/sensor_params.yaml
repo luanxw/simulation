@@ -1,0 +1,64 @@
+# 传感器标称参数（占位假设）——对应 spec 0002 第 1.2 节。
+# 实际选型冻结后在此文件更新，并按"规格书标称收紧"原则适配 test_thresholds.yaml。
+version: 1
+
+vehicle:
+  length_mm: 800
+  width_mm: 600
+  height_mm: 350
+  wheel_base_mm: 500
+  mowing_speed_ms: [0.3, 0.8]
+  transport_speed_max_ms: 1.6
+  estop_decel_ms2: 2.0        # 从安全停指令起算
+  cut_height_mm: [20, 100]
+
+lidar:                        # S1 主 LiDAR ×1
+  count: 1
+  mount_height_mm: 350
+  tilt_deg: 15                # 前倾下倾安装
+  fov_h_deg: 360
+  fov_v_deg: [-7, 52]
+  effective_lower_edge_deg: -22   # 安装后有效下视
+  near_ground_min_m: 0.67     # 目标顶面 <=80mm 的入视场距离 (0.350-0.080)/tan22°
+  ground_hit_min_m: 0.87      # 地面落点距离 0.350/tan22°
+  rate_hz: 10
+  points_per_sec: 200000
+  range_min_m: 0.1
+  range_max_m_80pct: 40.0
+  range_max_m_10pct: 10.0
+  accuracy_mm: 25
+  sigma_mm_at_10m: 20
+
+ultrasonic:                   # S2 超声 ×12，环形 30° 间隔
+  count: 12
+  ring_pitch_deg: 30
+  mount_height_mm: 120
+  beam_half_angle_deg: 15     # -6dB 半波束角标称
+  rate_hz_per_channel: 20
+  range_min_m: 0.05
+  range_max_m: 1.5
+  freq_khz: 40
+  accuracy_mm_at_1m: 15
+  sound_speed_formula: "c = 331.4 + 0.6*T"   # T 为摄氏度
+
+camera:                       # S3 双目 ×2，左右侧向
+  count: 2
+  baseline_mm: 90
+  focal_px: 537
+  resolution: [1280, 720]
+  fps: 30
+  shutter: global
+  disparity_px: 0.25          # 视差精度；ΔZ ≈ Z²·Δd/(f·B)
+  zmin_m: 0.2
+  zmax_m: 4.0
+  sync_lr_max_ms: 1.0
+  mount_height_mm: 250
+  yaw_out_deg: 15
+  tilt_down_deg: 10
+
+fusion:
+  rate_hz: 10
+  e2e_latency_p95_max_ms: 200
+  safety_latency_p95_max_ms: 250
+  dense_load_factor: 1.2      # 密集负载（>=20 目标）允许上浮比例
+  dense_targets_min: 20
