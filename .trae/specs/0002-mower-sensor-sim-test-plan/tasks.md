@@ -6,7 +6,7 @@
 > AC 覆盖说明：AC-1~AC-5 为方案文档级 rule，由 spec.md 内容与独立评审检查点 CP-R1~CP-R5 覆盖（见 review.md）；AC-6/AC-7 为文档级 rubric，由 CP-U6/CP-U7 覆盖；Task 1~12 覆盖 FR-1~FR-7 与 NFR-1~NFR-4，实施完成后的终审将对照全部 AC 复核。
 
 ## Task 1：仿真平台选型 PoC
-- **Status**：`pending`
+- **Status**：`in_progress`
 - **Priority**：high
 - **Depends On**：None
 - **Description**：
