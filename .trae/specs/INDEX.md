@@ -4,7 +4,7 @@
 
 | 编号 | 特性 | 目录 | 当前阶段 | 评审结果 | 最后更新 |
 |---|---|---|---|---|---|
-| — | _（尚无需求，按 `README.md` 的开工步骤创建第一个）_ | — | — | — | — |
+| 0002 | 割草机器人传感器套件仿真测试方案 | .trae/specs/0002-mower-sensor-sim-test-plan/ | Approve（2026-10-05 用户批准；pytest 代码基线已建，见 tasks.md 实施进展备注） | R2 pass（方案文档评审；实施终审待 Task 1~12 完成后另行进行） | 2026-10-05 |
 
 **阶段取值**：Specify / Plan / Approve / Implement / Review / Done
 
