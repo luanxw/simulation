@@ -1,7 +1,7 @@
 # [特性名称] - 独立评审
 
-> 仅当 tasks.md 队列清空后创建本文件；只在 Review 阶段修改。
-> 评审者必须是未参与实施的全新上下文。每条 AC/TR 都必须被某个检查点覆盖。
+> 仅当 tasks.md 队列清空（S4 Exit 全满足）后创建本文件；只在 Review 阶段修改。
+> 评审 agent 类型见同目录 state.md 的"评审者指定"（默认全新 general_purpose_task；独立性三不变：未参与实施/只读/出 R 报告）。每条 AC/TR 都必须被某个检查点覆盖。
 
 - [ ] CP-R1：[二值产品结果]
   - **Type**：`rule`
@@ -25,6 +25,7 @@
 
 ### Review R1
 - **Result**：`pass` | `fail` | `blocked`
+- **Reviewer**：[agent 类型；默认全新 general_purpose_task；用户指定时注明]
 - **Checks Performed**：
   - [执行的检查与命令/动作]
 - **Evidence**：

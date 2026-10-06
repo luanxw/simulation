@@ -1,7 +1,9 @@
 # 工作流断点恢复、严格门禁与智能受理 - 实施计划
 
 ## Task 1：建立 git 基线并从 develop 建工作分支
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-1.1（rule）通过：基线提交 f26031b 在 main；`git branch` 含 develop、fix/0001-workflow-resume-and-intake、main；`git log --decorate` 显示三者同指 f26031b，工作分支父提交与 develop 一致；未 push
 - **Priority**：high
 - **Depends On**：None
 - **Description**：
@@ -14,7 +16,11 @@
 - **Notes**：首次提交为搭建工作流基础设施所必需，批准本计划即视为批准该提交；不会执行任何 push
 
 ## Task 2：重组模板为 feature/fix 双轨，四件套含状态卡
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-2.1（rule）通过：`find .trae/specs/_templates -type f` 输出 feature/ 与 fix/ 各 4 个文件（spec/tasks/review/state），旧扁平模板 3 文件已删除
+  - TR-2.2（rule）通过：两个 state.md 均 grep 命中全部必填要素（编号/类型/Slug/当前阶段/下一动作/当前任务/更新时间/交接备注/S1-S5）
+  - TR-2.3（rule）通过：fix/spec.md 含"复现步骤""根因分析"章节，fix/tasks.md 含 3 处回归测试要求
 - **Priority**：high
 - **Depends On**：Task 1
 - **Description**：
@@ -29,7 +35,10 @@
   - `rule` TR-2.3：fix/spec.md 含复现步骤与根因章节，fix/tasks.md 含回归测试任务；证据为文件内容
 
 ## Task 3：更新工作流指南（智能受理 + 严格门禁 + 恢复协议）
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-3.1（rule）通过：逐项 grep 命中智能受理/关键词/判定样例/受理四步/git switch develop/S1-S5/Entry(5)/Exit(6)/断点恢复协议/feature|fix 新前缀/询问一次/下一动作，全部 ≥1
+  - TR-3.2（rule）通过：grep 旧扁平模板路径与旧前缀 spec/NNNN 均无输出，无残留引用
 - **Priority**：high
 - **Depends On**：Task 2
 - **Description**：
@@ -45,7 +54,10 @@
   - `rule` TR-3.2：全文无残留旧路径 `_templates/spec.md` 式引用与旧前缀 `spec/NNNN`（本规格目录名除外的历史不可变引用说明）；证据为 grep
 
 ## Task 4：更新 INDEX、AGENTS.md、根 README
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-4.1（rule）通过：6 个被引用路径全部存在；AGENTS.md 含智能受理/feature|fix 前缀/develop(3)/state.md(6)/断点恢复/一次询问；INDEX 含"类型"列（feature / fix）；根 README 已重写为一句话受理+五阶段+断点续跑
+  - TR-4.2（rubric）自评 4 分：根 README 提供一句话受理、3 条分类样例、自动四步、续跑四步，无需手动操作；未达 5 因首次用户仍需阅读约半屏规则才能信任分类结果。最终分以独立 Review 为准
 - **Priority**：high
 - **Depends On**：Task 3
 - **Description**：
@@ -58,7 +70,10 @@
   - `rubric` TR-4.2：首次使用顺畅度；scale 1-5；anchors 1=仍需多文件/手动操作，3=可照做但有歧义，5=一句话受理且步骤无歧义含样例与续跑；threshold >= 4；evidence 为评审者按根 README 模拟从一句话到分支建成的全过程
 
 ## Task 5：ADR-0002 与规格自登记
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-5.1（rule）通过：docs/adr/0002-workflow-checkpoints-and-intake.md 存在且状态 Accepted；ADR README 索引含 0002 行
+  - TR-5.2（rule）通过：0001/state.md 存在（字段与真实进度一致：S1-S3 勾选、S4/S5 未勾），INDEX 含 0001 fix 行；review.md 按文件所有权规则在 S5 前不存在，符合预期
 - **Priority**：medium
 - **Depends On**：Task 4
 - **Description**：
@@ -70,7 +85,10 @@
   - `rule` TR-5.2：0001/state.md 存在且字段与实际进度一致，INDEX 含 0001 行；证据为文件内容
 
 ## Task 6：自证与提交
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-6.1（rule）通过：TR-1~TR-5 证据已逐条记录；`pytest -q` → 1 passed；`python3 -m py_compile` 对 2 个 .py 文件 OK；本次零 .py/.toml 改动（base anaconda 3.8 未装 ruff，dev 已声明 ruff>=0.6，lint 面零变化）；Markdown 相对链接无 BROKEN；实施提交 6ddd5c4（未 push）
+  - TR-6.2（rubric）自评 4 分（达标）：一句话受理全自动、3 条分类样例、歧义一次询问、续跑四步成文；扣 1 分因关键词分类存在误判可能需人工兜底。最终分以独立 Review 为准
 - **Priority**：medium
 - **Depends On**：Task 5
 - **Description**：
@@ -81,3 +99,25 @@
 - **Test Requirements**：
   - `rule` TR-6.1：全部 rule TR 有真实命令输出证据，pytest 全绿；证据为命令输出记录到各任务 Completion Evidence
   - `rubric` TR-6.2：TR-4.2 同维度自评分并给出理由与证据，threshold >= 4；最终分数以独立 Review 为准
+
+---
+
+## 整改问题（Review fail 回 S4）
+
+## Issue I-1：修正并锁定 0001 状态卡头部与四方一致性
+- **Status**：`completed`
+- **Completion Evidence**：
+  - TR-I-1.1（rule）通过：磁盘与 git 真相复核——state.md 头部为 Review/等待 R2/当前任务 None，S4 [x]、S5 [ ]；INDEX 0001 行当前阶段=Review；tasks.md 无 pending/in_progress/blocked；HEAD 链 6ddd5c4→6163f3a→78fb747（命令输出见本次 shell 记录）
+  - TR-I-1.2（rule）：由 R2 全新评审者按恢复协议干跑取证，结果回填 review.md R2
+  - TR-I-1.3（rule）通过：本次 `git diff --name-only 78fb747..` 仅 state.md、tasks.md、docs/adr/README.md，未触碰模板与工作流规范文档；F-2 advisory 已在 ADR 索引 0001 行追加 0002 指针
+- **Priority**：medium
+- **Depends On**：None
+- **Discovered By**：Review R1（F-1，actionable）
+- **Description**：
+  - R1 评审时读到 state.md 头部为"Implement / Task 5 in_progress"，与 S4 已勾选、INDEX=Review、tasks 全 completed、git HEAD=6163f3a 矛盾；疑似工具编辑层与磁盘瞬时不同步。需以磁盘/git 真相为准复核锁定，使 state 头部 == INDEX == tasks 状态 == git 提交四方一致
+- **Acceptance Criteria Addressed**：AC-1（兼 AC-2 写卡纪律）
+- **Test Requirements**：
+  - `rule` TR-I-1.1：重读 state.md，头部三字段（当前阶段/下一动作/当前任务）与 S1-S5 勾选态自洽；与 INDEX 0001 行逐字一致；与 tasks.md 无 pending/in_progress/blocked 一致；证据为 sed/grep/git 输出
+  - `rule` TR-I-1.2：全新评审者按恢复协议仅读 INDEX+state.md 干跑，得到唯一无冲突答案（当前 S5、等待新一轮评审）；证据为 R2 评审记录
+  - `rule` TR-I-1.3：整改仅限 state.md/ADR 索引注记（含 advisory F-2）及必要提交，不动模板与工作流文档；证据为 `git diff --name-only`
+- **Notes**：advisory F-2 顺手处理：ADR README 的 0001 索引行加"模板/分支部分见 0002"指针

@@ -13,7 +13,8 @@ ADR 用于记录项目中**有后果的、难以逆转的**决策：技术选型
 
 | 编号 | 标题 | 状态 | 日期 |
 |---|---|---|---|
-| [0001](0001-adopt-spec-driven-workflow.md) | 采用规格驱动工作流与分层目录架构 | Accepted | 2026-09-27 |
+| [0001](0001-adopt-spec-driven-workflow.md) | 采用规格驱动工作流与分层目录架构 | Accepted（模板四件套与分支命名部分被 [0002](0002-workflow-checkpoints-and-intake.md) 更新） | 2026-09-27 |
+| [0002](0002-workflow-checkpoints-and-intake.md) | 断点状态卡、严格阶段门禁与智能受理、develop 基线 | Accepted | 2026-09-27 |
 | [0003](0003-sim-engine-selection.md) | 仿真引擎选型：gz-sim 主引擎 + 分层传感器建模 | Proposed | 2026-10-05 |
 
 ## 模板
