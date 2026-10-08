@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -16,19 +17,41 @@ from .archive import iso_now
 from .execution import SUITE_ORDER, SUITE_TITLES
 from .report import esc
 
+# 目录名内嵌 UTC 时间戳：<slug>_YYYYMMDDTHHMMSSZ[ -同秒序号]，或 dev-YYYYMMDDTHHMMSSZ
+_STAMP_RE = re.compile(r"(\d{8})T(\d{6})Z(?:-(\d+))?")
+
 
 class HistoryError(RuntimeError):
     """历史总览生成失败。"""
 
 
+def _archive_sort_key(item: dict[str, Any]) -> tuple[str, int, str]:
+    """按归档真实时间排序（spec：总览排序即时间序），而非版本标签字典序。
+
+    主键取目录名内嵌 UTC 时间戳（同秒冲突序号次之）；目录名缺时间戳时
+    回退 manifest.created_at；都不可用则排最后并按目录名稳定排列。
+    """
+    name = item["dir"]
+    match = _STAMP_RE.search(name)
+    if match:
+        stamp = match.group(1) + match.group(2)
+        suffix = int(match.group(3) or 0)
+        return stamp, suffix, name
+    created_at = (item.get("manifest") or {}).get("created_at", "")
+    digits = re.sub(r"\D", "", created_at)[:14]
+    if len(digits) == 14:
+        return digits, 0, name
+    return "99999999999999", 0, name
+
+
 def iter_archives(root: str | Path) -> list[dict[str, Any]]:
-    """返回归档元信息列表（按目录名排序）；损坏条目标 invalid=True 但保留。"""
+    """返回归档元信息列表（按内嵌 UTC 时间戳排序）；损坏条目标 invalid=True 但保留。"""
     root = Path(root)
     archive_root = root / "archive"
     if not archive_root.is_dir():
         return []
     items: list[dict[str, Any]] = []
-    for entry in sorted(archive_root.iterdir()):
+    for entry in archive_root.iterdir():
         if not entry.is_dir():
             continue
         item: dict[str, Any] = {"dir": entry.name, "has_report": (entry / "report.html").is_file()}
@@ -40,7 +63,7 @@ def iter_archives(root: str | Path) -> list[dict[str, Any]]:
         else:
             item["invalid"] = None
         items.append(item)
-    return items
+    return sorted(items, key=_archive_sort_key)
 
 
 def _pct(rate: float | None) -> str:

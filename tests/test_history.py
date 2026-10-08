@@ -91,6 +91,23 @@ def test_index_offline_self_contained(tmp_path):
     assert "<style>" in page
 
 
+def test_sorted_by_embedded_timestamp_not_version_lexical(tmp_path):
+    """R1-F2：v2.0(早)/v10.0(晚) 字典序与时间序相反时，必须按时间排列。"""
+    root = tmp_path / "reports"
+    early = _make_archive(root, "v2.0", datetime(2026, 10, 5, 9, 0, 0,
+                                                 tzinfo=timezone.utc),
+                          include=("TC-L-01",))
+    late = _make_archive(root, "v10.0", datetime(2026, 10, 8, 9, 0, 0,
+                                                 tzinfo=timezone.utc),
+                         include=("TC-L-01",))
+    assert late.name < early.name  # 字典序 v10 在前（与时间相反），故不能按目录名排序
+    items = iter_archives(root)
+    assert [i["dir"] for i in items] == [early.name, late.name]
+
+    page = rebuild_index(root).read_text(encoding="utf-8")
+    assert page.index("v2.0") < page.index("v10.0")
+
+
 def test_rebuild_idempotent_except_timestamp(tmp_path):
     root = tmp_path / "reports"
     _make_archive(root, "v1.0", M1, include=("TC-L-01",))

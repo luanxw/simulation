@@ -191,6 +191,16 @@ def _has_wildcard(pattern: str) -> bool:
     return any(ch in pattern for ch in "*?[")
 
 
+def _available_id_hint() -> str:
+    """按专题分组列出全部合法编号区间，供错误信息直接给出可选值（FR-4）。"""
+    groups = []
+    for suite in VALID_SUITES:
+        ids = sorted((tc for tc in SCENARIOS if tc.split("-")[1] == suite),
+                     key=lambda tc: int(tc.rsplit("-", 1)[1]))
+        groups.append(f"{ids[0]}~{ids[-1]}" if len(ids) > 1 else ids[0])
+    return "、".join(groups)
+
+
 def _expand_patterns(patterns: tuple[str, ...], *, strict: bool) -> set[str]:
     """把编号/通配模式展开为命中 TC 集合。
 
@@ -202,11 +212,13 @@ def _expand_patterns(patterns: tuple[str, ...], *, strict: bool) -> set[str]:
     for pattern in patterns:
         matched = {tc for tc in all_ids if fnmatch.fnmatchcase(tc, pattern)}
         if not matched and strict:
+            hint = _available_id_hint()
             if _has_wildcard(pattern):
-                examples = ", ".join(all_ids[:5])
-                msg = f"通配模式 {pattern!r} 未命中任何用例；可选编号示例：{examples} …"
+                msg = (f"通配模式 {pattern!r} 未命中任何用例；"
+                       f"可用编号区间：{hint}（共 {len(all_ids)} 条）")
             else:
-                msg = f"未知用例编号 {pattern!r}；全部 {len(all_ids)} 条编号见 scenarios.py"
+                msg = (f"未知用例编号 {pattern!r}；可用编号：{hint}"
+                       f"（共 {len(all_ids)} 条）")
             raise SelectionError(msg)
         hits |= matched
     return hits
@@ -241,11 +253,34 @@ def _select_side(suites: tuple[str, ...], patterns: tuple[str, ...],
     return _apply_tags(candidates, tags)
 
 
+def _validate_override(override: SelectionOverride) -> None:
+    """命令行覆盖值的枚举校验（FR-4，与批次 YAML 同构）。
+
+    不做这层校验时，非法 world 值会被 world="任意" 用例兜底为非空结果，
+    造成「打错标签却静默全绿」；非法值必须在选择前显式报错并列出可选值。
+    """
+    bad_suites = [s for s in override.suites if s not in VALID_SUITES]
+    if bad_suites:
+        msg = f"覆盖条件含未知专题 {bad_suites}；可选：{', '.join(VALID_SUITES)}"
+        raise SelectionError(msg)
+    for key, values in override.tags.items():
+        if key not in TAG_KEYS:
+            msg = f"覆盖条件含未知标签键 {key!r}；可选：{', '.join(TAG_KEYS)}"
+            raise SelectionError(msg)
+        valid_values = _valid_tag_values(key)
+        bad = [v for v in values if v not in valid_values]
+        if bad:
+            msg = (f"覆盖标签 {key} 含未知值 {bad}；"
+                   f"可选：{', '.join(sorted(valid_values))}")
+            raise SelectionError(msg)
+
+
 def select_tcs(batch: BatchConfig, override: SelectionOverride | None = None) -> tuple[str, ...]:
     """按批次（及 CLI 覆盖）解析最终执行用例，按编号排序返回。"""
     selected = _select_side(batch.suites, batch.include, batch.tags, strict_patterns=True)
 
     if override is not None and _override_active(override):
+        _validate_override(override)
         over = _select_side(override.suites, override.tcs, override.tags, strict_patterns=True)
         selected &= over
 
@@ -279,7 +314,16 @@ def resolve_datasets(batch: BatchConfig, seed_override: int | None = None) -> li
     resolved: list[dict[str, Any]] = []
     for ds_id in batch.datasets:
         ds = get_dataset(ds_id)
-        seeds = [seed_override] if seed_override is not None else ds.effective_seeds(default_seeds)
+        if ds.kind == "external":
+            # external 本期不执行：不挂合成种子，避免预览/快照暗示其参与合成采样
+            seeds: list[int] = []
+            seed_source = "external"
+        elif seed_override is not None:
+            seeds, seed_source = [seed_override], "cli"
+        else:
+            seeds = ds.effective_seeds(default_seeds)
+            seed_source = ("dataset" if ds.params.get("seeds") is not None
+                           else "sampling_default")
         resolved.append({
             "id": ds.id,
             "kind": ds.kind,
@@ -289,8 +333,7 @@ def resolve_datasets(batch: BatchConfig, seed_override: int | None = None) -> li
             "path": ds.path,
             "checksum": ds.checksum,
             "seeds": seeds,
-            "seed_source": "cli" if seed_override is not None else (
-                "dataset" if ds.params.get("seeds") is not None else "sampling_default"),
+            "seed_source": seed_source,
         })
     return resolved
 
@@ -305,8 +348,12 @@ def preview(batch: BatchConfig, override: SelectionOverride | None = None,
         lines.append(f"批次标注版本：{batch.version_label}")
     lines.append(f"数据集（{len(datasets)}）：")
     for ds in datasets:
-        lines.append(f"  - {ds['id']} [{ds['kind']}] {ds['title']} "
-                     f"seeds={ds['seeds']}（来源 {ds['seed_source']}）")
+        if ds["kind"] == "external":
+            lines.append(f"  - {ds['id']} [external] {ds['title']} "
+                         f"path={ds['path']}（external 数据集本期不执行，不使用合成种子）")
+        else:
+            lines.append(f"  - {ds['id']} [{ds['kind']}] {ds['title']} "
+                         f"seeds={ds['seeds']}（来源 {ds['seed_source']}）")
     lines.append(f"用例（{len(tcs)}）：")
     for tc in tcs:
         lines.append(f"  {tc}  {SCENARIOS[tc].title}  [{SCENARIOS[tc].suite}]")

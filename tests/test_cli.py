@@ -77,20 +77,38 @@ def test_bad_tag_syntax_exits_2(capsys):
 
 
 def test_selection_errors_exit_2_without_archive(tmp_path, capsys):
-    """AC-4：未知数据集 / 未知标签值 / 交集为空 三类错误都退出 2 且无归档。"""
+    """AC-4：未知数据集/未知标签值/非法专题/非法 world/交集为空 都退出 2 且无归档。
+
+    R1-F1 回归：非法 world=W9 曾被 world="任意" 用例兜底为假全绿（退出 0）。
+    """
     out_dir = tmp_path / "reports"
     bad_dataset = tmp_path / "bad-ds.yaml"
     bad_dataset.write_text("name: bad-ds\ndatasets: [nope-dataset]\n", encoding="utf-8")
+    # (argv, stderr 必须包含的提示片段)
     cases = [
-        ["run", "--batch", str(bad_dataset), "--out", str(out_dir)],
-        ["run", "--tag", "kind=foo", "--out", str(out_dir)],
-        # 激光批次与命令行 --suite F 交集为空
-        ["run", "--batch", str(LIDAR_BATCH), "--suite", "F", "--out", str(out_dir)],
+        (["run", "--batch", str(bad_dataset), "--out", str(out_dir)], "可选"),
+        (["run", "--tag", "kind=foo", "--out", str(out_dir)], "可选"),
+        (["run", "--tag", "world=W9", "--out", str(out_dir)], "可选"),
+        (["run", "--suite", "X", "--out", str(out_dir)], "可选"),
+        # 激光批次与命令行 --suite F 交集为空：值均合法，仅报空交集
+        (["run", "--batch", str(LIDAR_BATCH), "--suite", "F",
+          "--out", str(out_dir)], "选择结果为空"),
     ]
-    for argv in cases:
+    for argv, hint in cases:
         assert cli.main(argv) == 2, argv
-        assert "错误：" in capsys.readouterr().err, argv
+        err = capsys.readouterr().err
+        assert "错误：" in err and hint in err, argv
         assert not out_dir.exists(), argv
+
+
+def test_valid_world_tag_runs_and_keeps_any_world_case(tmp_path):
+    """R1-F1 防回归：合法 world 过滤仍能选中 world="任意" 的 TC-F-13。"""
+    out_dir = tmp_path / "reports"
+    code = cli.main(["run", "--suite", "F", "--tag", "world=W1", "--out", str(out_dir)])
+    assert code == 0
+    record = json.loads(
+        next((out_dir / "archive").iterdir()).joinpath("results.json").read_text("utf-8"))
+    assert "TC-F-13" in record["tcs"]
 
 
 def test_failed_tc_exits_1_but_archive_complete(tmp_path, capsys, monkeypatch):

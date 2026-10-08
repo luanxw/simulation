@@ -211,3 +211,67 @@ def test_resolve_datasets_seeds_and_override():
     overridden = resolve_datasets(batch(), seed_override=7)
     assert overridden[0]["seeds"] == [7]
     assert overridden[0]["seed_source"] == "cli"
+
+
+# ---- R1 整改 F1：命令行覆盖值必须做枚举校验（FR-4，防假全绿） ----
+
+def test_override_unknown_suite_rejected_with_options():
+    with pytest.raises(SelectionError, match="未知专题") as exc:
+        select_tcs(batch(), SelectionOverride(suites=("X",)))
+    assert "可选" in str(exc.value) and "L" in str(exc.value) and "F" in str(exc.value)
+
+
+def test_override_unknown_tag_values_rejected_with_options():
+    with pytest.raises(SelectionError, match="未知值") as exc:
+        select_tcs(batch(), SelectionOverride(tags={"world": ("W9",)}))
+    message = str(exc.value)
+    assert "可选" in message
+    for legal in ("W0", "W1", "W2", "W3"):
+        assert legal in message
+
+    with pytest.raises(SelectionError, match="未知值") as exc:
+        select_tcs(batch(), SelectionOverride(tags={"kind": ("foo",)}))
+    assert "static" in str(exc.value) and "safety" in str(exc.value)
+
+
+def test_override_unknown_tag_key_rejected():
+    with pytest.raises(SelectionError, match="未知标签键"):
+        select_tcs(batch(), SelectionOverride(tags={"sensor": ("L",)}))
+
+
+def test_override_valid_world_still_matches_any_world_case():
+    # 合法 world 过滤不得破坏 world="任意" 用例（TC-F-13）的兜底语义
+    got = select_tcs(batch(suites=("F",)), SelectionOverride(tags={"world": ("W1",)}))
+    assert "TC-F-13" in got
+    assert all(SCENARIOS[tc].world == "任意" or "W1" in SCENARIOS[tc].world for tc in got)
+
+
+# ---- R1 整改 F4：未知编号错误必须直接列出可选值 ----
+
+def test_unknown_exact_tc_error_lists_available_ids():
+    with pytest.raises(SelectionError, match="未知用例编号") as exc:
+        select_tcs(batch(), SelectionOverride(tcs=("TC-X-99",)))
+    message = str(exc.value)
+    assert "TC-L-01~TC-L-11" in message
+    assert "TC-U-01~TC-U-12" in message
+    assert "TC-C-01~TC-C-10" in message
+    assert "TC-F-01~TC-F-13" in message
+
+
+# ---- R1 整改 F3：external 数据集不挂合成种子 ----
+
+def test_external_dataset_preview_has_no_synthetic_seeds(monkeypatch):
+    from simulation.datasets import parse_datasets
+
+    table = parse_datasets({"datasets": [{
+        "id": "ext-real", "kind": "external", "title": "真实数据包",
+        "description": "预留", "path": "data/ext.zip"}]})
+    monkeypatch.setattr("simulation.datasets.load_datasets", lambda: table)
+
+    resolved = resolve_datasets(batch(datasets=("ext-real",)))
+    assert resolved[0]["seeds"] == []
+    assert resolved[0]["seed_source"] == "external"
+
+    text = preview(batch(datasets=("ext-real",), include=("TC-L-01",)))
+    assert "external 数据集本期不执行" in text
+    assert "[11, 22, 33]" not in text

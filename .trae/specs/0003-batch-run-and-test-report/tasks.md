@@ -245,3 +245,30 @@
 ## 整改问题（Review fail 后使用）
 
 > 评审的每条 actionable 发现，必须在重新选任务前在此落成 pending Issue。
+
+### Issue-1（blocker，源自 R1 F1 / AC-4）：CLI 覆盖标签/专题缺枚举校验，非法 world 静默假全绿
+- **Status**：`completed`（2026-10-08，待 R2 复核）
+- **Blocked By**：—
+- **Unblock Condition**：—
+- **Completion Evidence**：selection.py 新增 `_validate_override`（select_tcs 应用覆盖前校验：suites∈VALID_SUITES、tags 键∈TAG_KEYS、值∈_valid_tag_values，错误文本与批次侧同构并列可选值）；tests/test_selection.py 增 4 项（非法专题/world/kind/标签键、合法 world=W1 仍含 TC-F-13 防回归）；test_cli.py 负向矩阵扩为 5 类并断言 stderr 含"可选"/"选择结果为空"，新增合法 world CLI 回归。真实重放：`--tag world=W9`→`错误：覆盖标签 world 含未知值 ['W9']；可选：W0, W1, W2, W3` 退出 2；`--tag kind=foo`、`--suite X` 同样退出 2；三种均无归档产生（NO-ARCHIVE）；合法 `--suite F --tag world=W1` 退出 0 且归档含 TC-F-13。
+
+### Issue-2（minor，源自 R1 F2）：历史总览按目录名字典序而非时间戳排序
+- **Status**：`completed`（2026-10-08，待 R2 复核）
+- **Blocked By**：—
+- **Unblock Condition**：—
+- **Completion Evidence**：history.py 新增 `_archive_sort_key`（解析目录名内嵌 `YYYYMMDDTHHMMSSZ`+同秒序号；缺时间戳回退 manifest.created_at；再缺排最后），iter_archives 改按该键排序；test_history.py 增 `test_sorted_by_embedded_timestamp_not_version_lexical`（v2.0@10-05 早 / v10.0@10-08 晚，字典序 v10 在前但总览 v2.0 在前）。
+
+### Issue-3（minor，源自 R1 F3）：external 数据集 dry-run 误显示合成 seeds
+- **Status**：`completed`（2026-10-08，待 R2 复核）
+- **Blocked By**：—
+- **Unblock Condition**：—
+- **Completion Evidence**：selection.py resolve_datasets 对 kind=external 给出 seeds=[]、seed_source="external"（即使 --seed 也不挂合成种子）；preview 对 external 显示 `path=...（external 数据集本期不执行，不使用合成种子）`；test_selection.py 增 `test_external_dataset_preview_has_no_synthetic_seeds`；execute_batch 拦截行为不变（test_external_dataset_rejected_at_execution 仍绿）。
+
+### Issue-4（minor，源自 R1 F4）：未知精确用例编号错误未在终端列可选值
+- **Status**：`completed`（2026-10-08，待 R2 复核）
+- **Blocked By**：—
+- **Unblock Condition**：—
+- **Completion Evidence**：selection.py 新增 `_available_id_hint`（按专题分组 TC-L-01~TC-L-11、TC-U-01~TC-U-12、TC-C-01~TC-C-10、TC-F-01~TC-F-13 + 总条数），精确编号与通配无命中错误均直接在终端列出；test_selection.py 增 `test_unknown_exact_tc_error_lists_available_ids`。
+
+### 整改后总验
+- `ruff check .` → All checks passed!；`pytest -q` → **263 passed in 10.02s**（255 + 8 项整改回归）。指南测试总数同步 263。
