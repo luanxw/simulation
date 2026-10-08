@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from .backends import SyntheticBackend
+from .datasets import DatasetError
 from .runner import run_tc
 from .scenarios import SCENARIOS
 from .selection import (
@@ -37,6 +38,12 @@ def execute_batch(batch: BatchConfig, override: SelectionOverride | None = None,
     """按 数据集 × 用例 矩阵执行，返回 RunRecord。"""
     tcs = select_tcs(batch, override)
     datasets = resolve_datasets(batch, seed_override)
+    # spec 0003 非目标：external 数据集本期只预留注册 schema，不实际执行。
+    unsupported = [d["id"] for d in datasets if d["kind"] != "synthetic"]
+    if unsupported:
+        msg = (f"数据集 {unsupported} 为 external 类型，本期仅预留注册 schema、"
+               "暂不支持执行；请改用 synthetic 数据集（真实引擎接入路线见用户指南 5.2）")
+        raise DatasetError(msg)
     be = backend or SyntheticBackend()
 
     results: list[dict[str, Any]] = []

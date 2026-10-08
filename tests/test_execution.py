@@ -1,6 +1,9 @@
 """批次执行编排测试（spec 0003 Task 3，TR-3.1~3.6）。"""
 
+import pytest
+
 from simulation.backends import SyntheticBackend
+from simulation.datasets import DatasetError, parse_datasets
 from simulation.execution import SUITE_ORDER, SUITE_TITLES, execute_batch
 from simulation.runner import run_tc
 from simulation.selection import BatchConfig
@@ -113,3 +116,18 @@ def test_record_is_json_serializable():
     dumped = json.dumps(rec, ensure_ascii=False)
     restored = json.loads(dumped)
     assert restored["tcs"] == rec["tcs"]
+
+
+def test_external_dataset_rejected_at_execution(monkeypatch):
+    # spec 0003 非目标：external 数据集只预留 schema，被批次引用执行时必须明确报错，
+    # 而不是静默按合成后端跑（dry-run 的纯解析不在此限）。
+    table = parse_datasets({"datasets": [{
+        "id": "ext-real", "kind": "external", "title": "真实数据包",
+        "description": "预留条目", "path": "data/ext-capture.zip",
+        "checksum": {"alg": "sha256", "value": "abc123"},
+    }]})
+    monkeypatch.setattr("simulation.datasets.load_datasets", lambda: table)
+
+    b = batch(datasets=("ext-real",), include=("TC-L-01",))
+    with pytest.raises(DatasetError, match="external"):
+        execute_batch(b)
