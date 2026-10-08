@@ -1,0 +1,207 @@
+# 运行时批次选择与可视化测试报告 - 实施计划
+
+> 阶段：Plan / Implement。由 spec.md 派生：每条 AC 必须至少被一个任务覆盖。
+> 任务按依赖排序、垂直切片（一个任务交付可验证的完整增量）。
+> 标题中禁止写状态；状态只存在于 `Status` 字段。
+>
+> AC 覆盖矩阵：AC-1→T7；AC-2→T2；AC-3→T1/T3；AC-4→T2/T7；AC-5→T4；AC-6→T4；
+> AC-7→T5；AC-8→T5；AC-9→T5/T6；AC-10→T6；AC-11→T3；AC-12→T7；AC-13→T1~T9；
+> AC-14→T8；AC-15→T5；AC-16→T4/T5；AC-17→T1/T2/T8。
+> 分支：`spec/0003-batch-run-and-test-report`（批准后从 develop 创建）。
+
+## Task 1：数据集注册表、装载器与依赖声明
+- **Status**：`completed`
+- **Completion Evidence**：
+  - 新增 [datasets.yaml](file:///Users/allen/source/positec/simulation/src/simulation/config/datasets.yaml)（synthetic-default / synthetic-seed42，external schema 注释）、[datasets.py](file:///Users/allen/source/positec/simulation/src/simulation/datasets.py)（Dataset/dataclass、parse_datasets、load_datasets、get_dataset、DatasetError）、[test_datasets.py](file:///Users/allen/source/positec/simulation/tests/test_datasets.py)。
+  - pyproject.toml `dependencies = ["pyyaml>=6.0"]`。
+  - TR-1.1~1.4：`pytest tests/test_datasets.py -q` → 21 passed；`ruff check` → All checks passed!（2026-10-08，分支 spec/0003）。
+- **Priority**：high
+- **Depends On**：None
+- **Description**：
+  - 新增 `src/simulation/config/datasets.yaml`：数据集注册表 v1。
+    - 内置 `synthetic-default`（kind: synthetic；title/description；params 默认沿用 sampling，不重复写 seeds）。
+    - 内置一个参数组示例 `synthetic-seed42`（params.seeds: [42]），演示"多批数据"如何用 seeds 参数组表达。
+    - 注释中写明 external 数据集预留 schema（kind: external；path、checksum.sha256、title、description），本期不执行。
+  - 新增 `src/simulation/datasets.py`：`load_datasets()`（带缓存，仿 thresholds.py 风格）、`get_dataset(dataset_id)`（未知 id 抛 `DatasetError` 并列出可用 id）、数据集结构校验（id/kind 必填、kind ∈ {synthetic, external}、synthetic 参数白名单仅含 seeds 且为正整数列表；external 必须含 path）。
+  - 在 `pyproject.toml` 的 `dependencies` 补声明 `pyyaml>=6.0`（代码早已实际依赖，本需求 CLI 全新环境安装的前提）。
+  - 新增 `tests/test_datasets.py`。
+- **Acceptance Criteria Addressed**：AC-3、AC-13、AC-17
+- **Test Requirements**：
+  - `rule` TR-1.1：装载注册表返回两个内置合成数据集，字段齐全；`get_dataset("synthetic-default")` 成功，未知 id 抛 DatasetError 且错误文本含全部可用 id。
+  - `rule` TR-1.2：external 示例条目（测试内构造或注册表注释样例经解析函数校验）可通过 schema 校验，缺 path 的 external 条目报错。
+  - `rule` TR-1.3：seeds 非法（0/负数/非整数/空列表）时校验报错。
+  - `rule` TR-1.4：`pytest tests/test_datasets.py -q` 全绿，`ruff check src/simulation/datasets.py tests/test_datasets.py` 无告警。
+- **Notes**：不修改任何现有用例与阈值文件。
+
+## Task 2：批次 YAML 与用例选择器
+- **Status**：`pending`
+- **Priority**：high
+- **Depends On**：None
+- **Description**：
+  - 新增 `src/simulation/selection.py`：
+    - `BatchSelection`/`BatchConfig` 数据类：name、version_label（可空）、datasets（默认 `[synthetic-default]`）、suites、include、exclude、tags（仅允许派生自 Scenario 现有字段的标签键：world、kind）。
+    - `load_batch(path)`：装载 YAML、基础校验（未知顶层键/未知标签键报错并提示可用值）。
+    - `select_tcs(batch, override=None) -> tuple[str, ...]`：选择语义 =（suites 展开 ∪ include 通配（fnmatch，如 `TC-L-*`、`TC-U-03`））→ 按 tags 过滤（world 支持包含匹配，兼容 `W1/W2` 组合值；kind 精确匹配）→ 减去 exclude；suites/include 均空 = 全量 46 条。
+    - `SelectionOverride`（CLI 覆盖）：suites / tcs / tags / exclude；覆盖与批次条件取**交集收窄**，override.exclude 与 batch.exclude **并集追加**。
+    - `SelectionError`：未知 TC 编号、通配无命中、未知数据集 id、未知标签键/值、最终结果为空，五类错误各自错误信息列出合法可选值。
+    - `preview(batch, override) -> str`：dry-run 文本（数据集 × 用例清单与计数）。
+  - 新增 `tests/test_selection.py`。
+- **Acceptance Criteria Addressed**：AC-2、AC-4、AC-17
+- **Test Requirements**：
+  - `rule` TR-2.1：通配/多专题/白名单/黑名单/world 组合标签（W1/W2）/kind 标签/空条件全量，七类情形的解析集合逐一断言与预期 TC 集合相等且结果按编号排序。
+  - `rule` TR-2.2：override 交集收窄与排除追加语义各一例断言；override 指定 `--tc` 时忽略批次 suites/include 的收窄结果符合"交集"定义（即只保留同时满足者），并在测试注释写明语义。
+  - `rule` TR-2.3：五类 SelectionError 各有测试，错误文本包含合法值提示；空结果拒绝执行。
+  - `rule` TR-2.4：批次引用未知数据集 id 报错（与 datasets.py 校验联动）。
+  - `rule` TR-2.5：pytest/ruff 对新增文件全绿无告警。
+- **Notes**：标签键刻意限定 world/kind，不引入自由 tags 字段，避免与用例注册脱节。
+
+## Task 3：批次执行编排（数据集 × 用例矩阵）与可复现
+- **Status**：`pending`
+- **Priority**：high
+- **Depends On**：Task 1、Task 2
+- **Description**：
+  - 新增 `src/simulation/runtime.py`：基于 contextvars 的执行上下文（当前数据集 id、seeds 覆盖），提供 `run_context(dataset)` 上下文管理器。
+  - 微调 `src/simulation/runner.py`：`_seeds()` 优先读 runtime 上下文中的 seeds 覆盖，回退 `sampling()["default_seeds"]`；`run_tc` 增加可选参数 `seeds: list[int] | None = None`（默认 None 时行为完全不变，经上下文透传，保证向后兼容 NFR-6）。
+  - 新增 `src/simulation/execution.py`：
+    - `execute_batch(batch, override=None, backend=None, seed_override=None) -> RunRecord`：对每个选中数据集 × 每条选中用例执行 `run_tc`，记录 dataset_id、数据集参数、verdict；同后端实例在数据集间复用（注意数据集只改 seeds，不改 backend 状态；故障/降级状态不跨用例残留，沿用现有 runner 的 try/finally 约定）。
+    - `summarize(record) -> dict`：总体 + 四专题（L/U/C/F）的用例执行数、通过数、通过率、检查项总数/通过数。
+    - RunRecord 为纯 dict/可 JSON 序列化结构，含 schema_version、batch 归一化快照、datasets 解析结果、results（按 dataset 分组）、summary。
+  - 新增 `tests/test_execution.py`。
+- **Acceptance Criteria Addressed**：AC-3、AC-11、AC-13
+- **Test Requirements**：
+  - `rule` TR-3.1：双数据集 × 多用例批次的结果条数 = 数据集数 × 用例数，每条结果带正确 dataset_id。
+  - `rule` TR-3.2：数据集 seeds 覆盖实际生效：`synthetic-seed42` 与默认数据集的 manifest/record 中 seeds 字段不同；同一数据集两次执行 verdict 逐字段一致（可复现）。
+  - `rule` TR-3.3：相同批次/seed 连续两次 `execute_batch` 产生的 results 中所有 `checks[].value` 与 pass 完全相等（AC-11 直接证据）。
+  - `rule` TR-3.4：`run_tc("TC-L-01")` 无参调用结果与改动前基线一致（现有 156 项测试全绿即回归证据）。
+  - `rule` TR-3.5：summarize 四专题计数与手工从 RunRecord 统计一致；不存在的专题计数为 0 而不报错。
+  - `rule` TR-3.6：新增文件 pytest/ruff 全绿；全套 pytest 不因 runner 改动回归。
+- **Notes**：runner 微调仅限 `_seeds()` 取值来源与可选参数，判定逻辑零改动。
+
+## Task 4：归档目录与 manifest 证据链
+- **Status**：`pending`
+- **Priority**：high
+- **Depends On**：Task 3
+- **Description**：
+  - 新增 `src/simulation/archive.py`：
+    - `make_archive(root, version_label, run_record) -> Path`：目录名 `<safe(version)>_<UTC紧凑时间戳>`；同版本重复执行产生不同目录（时间戳冲突时追加序号），不覆盖。
+    - 写入 `results.json`（RunRecord，UTF-8、缩进、ensure_ascii=False、键排序稳定）。
+    - 写入批次快照 `batch.snapshot.yaml`（归一化后的批次定义）与 `datasets.snapshot.yaml`（本次引用到的数据集定义）。
+    - 写入 `manifest.json`：schema_version、version、created_at(UTC ISO8601)、git.commit、git.dirty、python、backend、seed（含来源：dataset/--seed）、datasets 清单及参数、selection 条件快照、counts（用例/检查项，总体与四专题）、归档内文件清单。
+    - git 探测：`git rev-parse HEAD` 与 `git status --porcelain`（超时/非 git 环境 → `"unavailable"`，不致命）。
+  - 根 `.gitignore` 增加 `reports/`。
+  - 新增 `tests/test_archive.py`（tmp_path 隔离）。
+- **Acceptance Criteria Addressed**：AC-5、AC-6、AC-13、AC-16
+- **Test Requirements**：
+  - `rule` TR-4.1：执行后归档目录含 report 之外的全部四个文件（report.html 在 Task 5 接入；本任务先断言 results.json、manifest.json、两个快照存在且可解析）。
+  - `rule` TR-4.2：manifest 逐字段断言：version/created_at/commit/dirty/python/backend/seed/datasets/selection/counts 均存在且与本次 RunRecord、批次一致。
+  - `rule` TR-4.3：monkeypatch git 探测为失败时 commit == "unavailable" 且不抛异常。
+  - `rule` TR-4.4：同版本连续两次归档生成两个不同目录、内容独立；版本标识中的路径分隔符/空格被安全化。
+  - `rule` TR-4.5：`.gitignore` 含 `reports/`；新增测试与 ruff 全绿。
+- **Notes**：时间戳/manifest 运行时间字段是 AC-11 复现比对时唯一允许的差异。
+
+## Task 5：自包含单次 HTML 报告
+- **Status**：`pending`
+- **Priority**：high
+- **Depends On**：Task 4
+- **Description**：
+  - 新增 `src/simulation/report.py`：`render_report(run_record, manifest) -> str`（纯标准库字符串拼接/`string.Template`，不引第三方）。
+    - 抬头：版本、运行时间、commit（含 dirty 标记）、seed、数据集清单、后端。
+    - 总览条：总体用例通过率、检查项通过率。
+    - 四专题分区（激光 LiDAR / USS 超声 / 相机 / 融合）：用例执行数、通过数、通过率、检查项统计；红/绿/灰配色（pass/fail/pending_backend）。
+    - 用例下钻：每专题下用例行可就地展开（原生 `<details>` 或内联 JS），展示用例标题与全部 check：name、status、value、op、threshold；检出率条件（数据来自 runner 的 cond 统计，含 ci 字段时）展示 Wilson CI 上下界；多数据集结果分组展示。
+    - CSS/JS 全部内联；页面注明报告生成时间与归档目录名。
+  - 归档流程接入：Task 4 的归档目录写入 `report.html`（由 archive 调用 report 渲染，或 CLI 串联；保持 archive 单测可注入假 HTML）。
+  - 新增 `tests/test_report.py`。
+- **Acceptance Criteria Addressed**：AC-7、AC-8、AC-9、AC-13、AC-15、AC-16
+- **Test Requirements**：
+  - `rule` TR-5.1：渲染结果含四专题中文名（激光、USS、相机、融合）与每专题统计，数值与 summarize() 输出一致。
+  - `rule` TR-5.2：RunRecord 中每条 verdict 的每个 check 的 name/status/value/op/threshold 均出现在 HTML；含 ci 的条件其上下界数值出现。
+  - `rule` TR-5.3：静态扫描输出不含 `http://`、`https://`、外链 `<script src=`、`<link rel="stylesheet"`；file:// 打开所需资源全部内联。
+  - `rule` TR-5.4：构造含 fail 用例与多数据集的 RunRecord，报告中失败用例与失败 check 可被字符串断言定位；下钻交互路径 ≤ 2 次点击（用例详情在专题分区内的 `<details>` 中，断言 DOM 层级结构）。
+  - `rule` TR-5.5：report.html 经归档端到端写入并存在；pytest/ruff 全绿。
+  - `rubric` TR-5.6：报告专业可读性；scale 1-5；anchors 1=版面混乱看不懂口径 / 3=信息齐但需讲解 / 5=首次阅读 30 秒看懂四专题与红绿；threshold >= 4；evidence：评审人在浏览器独立阅读 report.html 的记录。
+  - `rubric` TR-5.7：证据可辩护性；scale 1-5；anchors 1=只有红绿 / 3=有 value/threshold 但难找或缺 CI / 5=3 次点击内看到 value/op/threshold/CI/seed/版本/commit；threshold >= 4；evidence：下钻实操与归档结构。
+- **Notes**：rubric 由独立评审打分；实施期先以 rule TR-5.1~5.5 固化客观部分。
+
+## Task 6：跨版本历史总览页
+- **Status**：`pending`
+- **Priority**：medium
+- **Depends On**：Task 5
+- **Description**：
+  - 新增 `src/simulation/history.py`：
+    - `iter_archives(root) -> list[ArchiveMeta]`：扫描 `root/archive/*/manifest.json`，按目录名时间序解析。
+    - `rebuild_index(root) -> Path`：聚合每个归档的版本、时间、四专题与总体通过率，生成根下 `index.html`（自包含内联样式；版本列为指向 `archive/<dir>/report.html` 的相对链接；含生成时间与归档总数）；幂等（重复生成内容除生成时间外一致）。
+  - 每次 CLI run 完成后自动调用 rebuild_index。
+  - 新增 `tests/test_history.py`。
+- **Acceptance Criteria Addressed**：AC-9、AC-10、AC-13
+- **Test Requirements**：
+  - `rule` TR-6.1：构造 3 个归档（写 manifest.json + 占位 report.html）后重建，index.html 含 3 行版本、各专题通过率单元格与正确相对链接。
+  - `rule` TR-6.2：空归档根生成"暂无记录"总览且不报错；损坏 manifest 的目录被跳过并在页内标注（不致命）。
+  - `rule` TR-6.3：index.html 同样无任何外部 http(s) 引用。
+  - `rule` TR-6.4：重复 rebuild 幂等（除生成时间戳外字节一致）；pytest/ruff 全绿。
+- **Notes**：不做软链接；"latest" 入口通过总览页第一行天然实现。
+
+## Task 7：CLI 装配与退出码
+- **Status**：`pending`
+- **Priority**：high
+- **Depends On**：Task 5、Task 6
+- **Description**：
+  - 新增 `src/simulation/cli.py`（argparse、`main(argv=None) -> int`）：
+    - `run`：`--batch PATH`（可空=全量默认批次）、`--version LABEL`、`--suite L,U`、`--tc TC-L-01`（可重复）、`--tag world=W1`（可重复）、`--exclude PAT`（可重复）、`--seed N`（覆盖数据集 seeds 为 [N] 并记录来源）、`--out DIR`（默认 reports）、`--dry-run`（只打印 preview，不执行不归档）。
+    - `rebuild-index`：`--out DIR`。
+    - 终端输出：执行矩阵计数、四专题用例通过率汇总、归档目录路径、总览页路径。
+    - 错误处理：SelectionError/DatasetError/批次文件缺失 → stderr 明确信息 + 退出码 2，且不产生归档；用例失败 → 退出码 1，归档与报告完整生成；成功 → 0。
+  - 新增 `src/simulation/__main__.py`，支持 `python -m simulation` 与 `python -m simulation.cli` 两种调用。
+  - 新增 `tests/test_cli.py`。
+- **Acceptance Criteria Addressed**：AC-1、AC-4、AC-12、AC-13
+- **Test Requirements**：
+  - `rule` TR-7.1：`python -m simulation.cli --help`、`run --help`、`rebuild-index --help` 退出码 0 且列出全部参数（subprocess 真实调用）。
+  - `rule` TR-7.2：无 --batch 在 tmp out 下全量执行 46 条，退出码 0，产物含 report.html/results.json/manifest.json/index.html，终端汇总含四专题。
+  - `rule` TR-7.3：`--dry-run` 输出用例与数据集清单、计数正确，且 out 目录下无 archive 产物。
+  - `rule` TR-7.4：未知 TC（`--tc TC-X-99`）退出码 2、错误文本含合法值提示、无归档；不存在的 --batch 文件退出码 2。
+  - `rule` TR-7.5：用例失败场景（同进程 main + monkeypatch 使一个 verdict 失败）退出码 1 但归档与报告完整；选择错误退出码 2 且无归档。
+  - `rule` TR-7.6：`--seed 42` 生效：manifest seed 记录 42 与来源 `--seed`；同 seed 重跑结果一致。
+  - `rule` TR-7.7：CLI 新测试全绿；ruff 全绿。
+- **Notes**：测试以 `main([...])` 同进程注入 tmp out 为主，--help 用 subprocess 验真实入口。
+
+## Task 8：示例批次与用户指南
+- **Status**：`pending`
+- **Priority**：medium
+- **Depends On**：Task 7
+- **Description**：
+  - 新增 `src/simulation/config/batches/lidar-suite.yaml`（激光 11 条专题批次，含中文注释说明各字段）。
+  - 新增 `src/simulation/config/batches/safety-dynamic.yaml`（融合安全/动态标签批次，演示 tags 与多条件组合）。
+  - 更新 `src/simulation/docs/user_guide.md`：新增章节"批次执行与可视化报告"，覆盖：
+    - 批次 YAML 字段与选择/合并语义（交集收窄、排除追加）、数据集字段与 external 预留；
+    - CLI 全部参数与退出码；
+    - 归档目录结构、manifest 字段、复现方法；
+    - 报告阅读路径（首页四专题 → 用例 → check 证据/CI）；
+    - 对外发布方式（整体拷贝/压缩归档目录或挂载 reports/ 到静态 Web 服务；index.html 为入口）。
+- **Acceptance Criteria Addressed**：AC-14、AC-17
+- **Test Requirements**：
+  - `rule` TR-8.1：两个示例批次经 `run --batch ... --dry-run` 输出清单与其声明一致（激光=11 条）。
+  - `rule` TR-8.2：按用户指南新增章节中的命令原样执行（临时 out），成功生成归档并退出码 0。
+  - `rule` TR-8.3：现有 `tests/test_docs.py` 风格下新增对示例批次可装载、指南章节存在关键命令的一致性测试；pytest/ruff 全绿。
+  - `rubric` TR-8.4：配置可扩展性；scale 1-5；anchors 1=加批次要改代码 / 3=加 YAML 可但 external 路径不清 / 5=批次与合成数据集仅改 YAML、external 预留有文档；threshold >= 4；evidence：评审人按指南 5 分钟内新建一个自定义批次并 dry-run 成功。
+- **Notes**：遵循既有"文档-配置一致性由测试守护"的约定。
+
+## Task 9：端到端自验、证据归档与规格收尾
+- **Status**：`pending`
+- **Priority**：medium
+- **Depends On**：Task 8
+- **Description**：
+  - 真实环境（conda simulation-py312）端到端执行：全量默认批次、lidar-suite 示例、--dry-run、一次失败语义验证（临时批次收窄后用测试注入方式或记录为测试证据）、rebuild-index 幂等。
+  - 全量 `pytest -q` 与 `ruff check .` 留证；清理本次产生的 reports/（已 gitignore，不入库）。
+  - 回填本文件各任务 Completion Evidence；确认 AC 全覆盖；准备独立评审输入清单（spec/tasks 路径、运行命令、关键产物路径）。
+- **Acceptance Criteria Addressed**：AC-13（DoD 总验收）
+- **Test Requirements**：
+  - `rule` TR-9.1：`PYTHONPATH=src /usr/local/anaconda3/envs/simulation-py312/bin/python -m pytest -q` 全绿，附真实输出数字；`ruff check .` 为 All checks passed。
+  - `rule` TR-9.2：端到端命令真实输出（含归档路径、index.html、四专题汇总）粘贴入 Completion Evidence。
+  - `rule` TR-9.3：tasks.md 无 pending/in_progress/blocked（评审 Issue 除外），每条 AC 至少有一个 completed 任务与其证据对应。
+- **Notes**：本任务不写业务代码；发现缺口回开对应任务而非在此修补。
+
+---
+
+## 整改问题（Review fail 后使用）
+
+> 评审的每条 actionable 发现，必须在重新选任务前在此落成 pending Issue。
