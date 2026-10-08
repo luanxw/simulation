@@ -139,7 +139,10 @@
 - **Notes**：rubric 由独立评审打分；实施期先以 rule TR-5.1~5.5 固化客观部分。
 
 ## Task 6：跨版本历史总览页
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - 新增 [history.py](file:///Users/allen/source/positec/simulation/src/simulation/history.py)（iter_archives 扫描容错、render_index 自包含表格、rebuild_index 幂等写 root/index.html，相对链接 archive/<dir>/report.html）与 [test_history.py](file:///Users/allen/source/positec/simulation/tests/test_history.py)。
+  - TR-6.1~6.4：5 项测试全绿（3 归档版本/时间/四专题通过率/相对链接、空根占位、损坏 manifest 跳过标注、零外链、固定生成时间幂等）；全套 `pytest -q` → 239 passed；`ruff check .` → All checks passed!（2026-10-08）。
 - **Priority**：medium
 - **Depends On**：Task 5
 - **Description**：
