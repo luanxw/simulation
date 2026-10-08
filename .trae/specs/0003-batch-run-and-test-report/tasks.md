@@ -160,7 +160,11 @@
 - **Notes**：不做软链接；"latest" 入口通过总览页第一行天然实现。
 
 ## Task 7：CLI 装配与退出码
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - 新增 [cli.py](file:///Users/allen/source/positec/simulation/src/simulation/cli.py)（argparse：run / rebuild-index 子命令；--batch/--version/--suite/--tc/--tag/--exclude/--seed/--out/--dry-run；退出码 0/1/2；串联 execute_batch→write_archive(render_report)→rebuild_index）、[__main__.py](file:///Users/allen/source/positec/simulation/src/simulation/__main__.py)（支持 `python -m simulation`）与 [test_cli.py](file:///Users/allen/source/positec/simulation/tests/test_cli.py)。
+  - 配套重构 [archive.py](file:///Users/allen/source/positec/simulation/src/simulation/archive.py)：write_archive 以 report_renderer(record, manifest) 回调在归档内部 manifest 构建后渲染 report.html，保证报告抬头版本/时间与 manifest 一致（test_archive/test_report/test_history 同步更新）。
+  - TR-7.1~7.5：11 项测试全绿（三级 --help、全量归档+终端四专题汇总、dry-run 零产物、未知 TC/缺失批次/坏标签→2、注入失败→1 且归档完整、--seed 写入 manifest、批次文件 suite+tag、rebuild-index 含空根、`python -m simulation.cli` 子进程实跑）；全套 `pytest -q` → 250 passed；`ruff check .` → All checks passed!（2026-10-08）。
 - **Priority**：high
 - **Depends On**：Task 5、Task 6
 - **Description**：
