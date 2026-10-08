@@ -1,0 +1,24 @@
+# 激光 LiDAR 专题批次（spec 0003 示例）
+#
+# 跑法：
+#   PYTHONPATH=src python -m simulation.cli run \
+#     --batch src/simulation/config/batches/lidar-suite.yaml
+#   预览（不执行、不归档）加 --dry-run。
+#
+# 字段说明：
+#   name          批次名，可省略（省略时取文件名）
+#   version_label 被测版本标识，可省略；命令行 --version 优先级更高
+#   datasets      数据集 id 列表，注册表见 config/datasets.yaml
+#   suites        专题，取并集：L=激光 / U=超声(USS) / C=相机 / F=融合
+#   include       用例编号或 fnmatch 通配，与 suites 取并集，如 "TC-L-0[1-5]"
+#   tags          场景标签过滤（在 suites/include 命中后收窄）：
+#                   world: W0/W1/W2/W3（用例标注 "W1/W2" 组合时命中其一即可）
+#                   kind : static/dynamic/drive/safety
+#   exclude       最后剔除的编号/通配；命令行 --exclude 会在此基础上追加
+#
+# 本批次：激光专题全部 11 条（TC-L-01 ~ TC-L-11）× 默认合成数据集。
+name: lidar-suite
+datasets:
+  - synthetic-default
+suites:
+  - L

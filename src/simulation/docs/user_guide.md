@@ -57,13 +57,22 @@ PYTHONPATH=src py312python -m pytest -k "TC-U-03" -q               # 按用例�
 src/simulation/
 ├── config/
 │   ├── sensor_params.yaml      # 传感器标称参数（量程/安装/帧率…）——改选型只动这里
-│   └── test_thresholds.yaml    # 全部 46 条用例的判定阈值——改门禁只动这里
+│   ├── test_thresholds.yaml    # 全部 46 条用例的判定阈值——改门禁只动这里
+│   ├── datasets.yaml           # 数据集注册表（synthetic 内置 + external 预留）
+│   └── batches/*.yaml          # 批次定义（选哪些用例 × 哪些数据集），见第 5 章
 ├── obstacles.py                # 障碍物规格库：50 项，每项五要素+各传感器距离档与门限
 ├── scenarios.py                # 场景注册表：46 条用例定义 + 专项检出条件表 NAMED
 ├── thresholds.py               # 配置装载器：tc_gates("TC-L-01") 取某条用例阈值
 ├── verdict.py                  # 判定器：检出率/Wilson 区间/稳定窗/误差统计/门禁判定
 ├── backends.py                 # 合成后端：确定性传感器模型（种子驱动，可注入故障）
 ├── runner.py                   # 执行器：run_tc("TC-L-01") → verdict 字典
+├── datasets.py                 # 数据集注册表装载与校验
+├── selection.py                # 批次选择器：专题/通配/标签/黑白名单 + dry-run 预览
+├── execution.py                # 批次编排：数据集 × 用例矩阵 → RunRecord + 四专题汇总
+├── archive.py                  # 归档：results/manifest/配置快照，同版本不覆盖
+├── report.py                   # 单次自包含 HTML 报告（四专题 + check 级证据下钻）
+├── history.py                  # 跨版本 index.html 历史总览
+├── cli.py                      # 命令行：python -m simulation.cli run / rebuild-index
 └── docs/                       # 本文档 + 标准指导书
 tests/                          # 测试镜像：test_gates_l/u/c/f.py 即四套门禁
 ```
@@ -157,9 +166,93 @@ be.combo = None                         # 用完记得复位
 
 包线数值在 `test_thresholds.yaml` 的 `degradation_envelope:` 段，7 组合与 spec 5 章 TC-F-08 表一一对应。
 
-## 5. 修改与扩展（怎么做才不破坏一致性）
+## 5. 批次执行与可视化报告（spec 0003）
 
-### 5.1 调整某个门禁阈值
+需要"挑一批数据、跑某一组用例、产出可对外发布的标准报告并归档证据"时，用批次 + CLI，而不是自己写循环。
+
+### 5.1 批次 YAML：声明跑哪些用例
+
+批次文件放在 `src/simulation/config/batches/*.yaml`（仓库自带两个示例：`lidar-suite.yaml`、`safety-dynamic.yaml`），字段如下：
+
+| 字段 | 含义 |
+|---|---|
+| `name` | 批次名，可省略（省略取文件名） |
+| `version_label` | 被测版本标识，可省略；命令行 `--version` 优先级更高 |
+| `datasets` | 数据集 id 列表（见 5.2），省略时默认 `synthetic-default` |
+| `suites` | 专题取并集：`L` 激光 / `U` 超声(USS) / `C` 相机 / `F` 融合 |
+| `include` | 用例编号或 fnmatch 通配（如 `TC-L-*`、`TC-L-0[1-5]`），与 suites 取并集 |
+| `tags` | 标签过滤：`world: [W1, W2]`、`kind: [static, dynamic, drive, safety]` |
+| `exclude` | 最后剔除的编号/通配 |
+
+选择语义：**（suites ∪ include 命中）→ tags 过滤 → 减去 exclude**；suites 与 include 都空 = 全量 46 条。
+标签内多值是「或」、标签键之间是「与」（如 `world:[W1,W2]` + `kind:[safety,dynamic]` = W1 或 W2 场景中的安全/动态用例）。
+命令行的 `--suite/--tc/--tag` 与批次结果取**交集收窄**，命令行 `--exclude` 在批次排除上**追加**。
+
+### 5.2 数据集注册表：声明跑哪批数据
+
+注册表在 `src/simulation/config/datasets.yaml`，批次通过 id 引用，执行矩阵 = **数据集 × 用例**。
+
+- `kind: synthetic`：合成后端数据集；`params.seeds`（正整数列表）可覆盖 `test_thresholds.yaml` 的 `sampling.default_seeds`（默认 11/22/33），用参数组表达"多批数据"。内置 `synthetic-default`（默认种子）与 `synthetic-seed42`（seeds=[42] 示例）。**新增一个合成数据集只改 YAML，不改代码。**
+- `kind: external`：真实采集/仿真引擎数据包的**预留形态**，必填 `path`、可选 `checksum: {alg: sha256, value: ...}`。本期只做 schema 校验与归档引用，**批次引用它实际执行会明确报错退出（退出码 2）**，不会静默按合成数据跑；待真实引擎后端接入后才执行。
+
+### 5.3 命令行
+
+```bash
+# 全量 46 条（不带 --batch 的默认批次）
+PYTHONPATH=src /usr/local/anaconda3/envs/simulation-py312/bin/python -m simulation.cli run
+
+# 激光专题示例批次，先预览不执行
+PYTHONPATH=src /usr/local/anaconda3/envs/simulation-py312/bin/python -m simulation.cli run \
+  --batch src/simulation/config/batches/lidar-suite.yaml --dry-run
+
+# 正式执行激光批次并标注版本（产物写入 --out，默认 reports/）
+PYTHONPATH=src /usr/local/anaconda3/envs/simulation-py312/bin/python -m simulation.cli run \
+  --batch src/simulation/config/batches/lidar-suite.yaml --version v1.0 --out /tmp/sim-reports
+
+# 临时收窄：只跑融合安全两条、全局种子固定 42
+PYTHONPATH=src /usr/local/anaconda3/envs/simulation-py312/bin/python -m simulation.cli run \
+  --batch src/simulation/config/batches/safety-dynamic.yaml --tag kind=safety --seed 42
+
+# 归档被外部清理后，根据 archive/ 重建历史总览
+PYTHONPATH=src /usr/local/anaconda3/envs/simulation-py312/bin/python -m simulation.cli rebuild-index
+```
+
+参数一览：`--batch`、`--version`、`--suite L,U`、`--tc`（可重复/通配）、`--tag k=v`（可重复）、`--exclude`（可重复）、`--seed N`、`--out DIR`、`--dry-run`；另有 `rebuild-index --out DIR` 子命令。
+
+退出码：**0** 全部通过；**1** 有用例失败（归档与报告仍完整写出，不丢证据）；**2** 选择/配置错误（未知用例/数据集/标签、批次文件缺失、引用 external 数据集执行等，此时不产生归档）。
+
+### 5.4 归档结构与复现
+
+每次执行在 `<out>/archive/<版本>_<UTC时间戳>/` 下生成（同版本重复执行不覆盖，同秒冲突自动加序号）：
+
+```
+archive/v1.0_20261008T031500Z/
+├── results.json            # 全部 verdict 原始数据（按数据集分组，含每条 check 的 value/op/threshold/n/CI）
+├── manifest.json           # 元数据：版本、UTC 时间、git commit/dirty、python/backend、seed 与来源、
+│                           #         数据集（含 path/checksum 引用）、选择快照、计数、文件清单
+├── batch.snapshot.yaml     # 本次批次配置快照
+├── datasets.snapshot.yaml  # 本次数据集定义快照
+└── report.html             # 单次可视化报告（离线自包含）
+```
+
+复现一次历史执行：取归档中的 `batch.snapshot.yaml` + `datasets.snapshot.yaml` + `manifest.seed`（注意 `seed_source`，`cli` 表示当时用了 `--seed`）与 `git.commit`，在同一 commit 用相同 `--batch/--seed` 重跑；合成后端确定性，同种子同输入结果逐值一致（results.json 可直接 diff，除时间戳外应无差异）。
+
+### 5.5 阅读报告（被质疑时的取证路径）
+
+1. 打开 `<out>/index.html`（历史总览）：每行一个版本，含运行时间与激光/USS/相机/融合四专题通过率、总体通过率，点版本列进入该次报告。
+2. 单次报告 `report.html`：顶部抬头（版本/时间/git commit/seed/数据集/选择条件）→ 总体计数 → 四个专题分区（激光 LiDAR / USS 超声 / 相机 / 融合），每分区列出本次执行用例与通过数。
+3. 点开任意用例（折叠区）：每条检查项一行——检查名、通过/失败状态、实测 `value`、比较符与 `threshold`、样本量 `n`、检出率的 Wilson 95% 置信区间。争议时三次点击内即可定位"什么版本、什么种子、多少样本、实测多少、门限多少、置信区间多宽"的完整证据链。
+
+### 5.6 对外发布
+
+报告与总览均为**零外部依赖的纯静态 HTML**（内联 CSS、无脚本、无 http 外链），断网可开。发布方式任选：
+
+- 整个归档根目录（`index.html` + `archive/`）拷贝或压缩后发出，对方解压开 `index.html` 即可；
+- 或把该目录挂载到任意静态 Web 服务（nginx/GitHub Pages/内网文件服务器），入口始终是 `index.html`。
+
+## 6. 修改与扩展（怎么做才不破坏一致性）
+
+### 6.1 调整某个门禁阈值
 
 例：把旗杆 @3 m 的门限从 98% 收紧到 99%：
 
@@ -169,7 +262,7 @@ be.combo = None                         # 用完记得复位
 
 > 铁律：**阈值只存在于两处**（yaml + obstacles.py），绝不散落在测试或业务代码里；文档与配置不一致时测试会直接失败。
 
-### 5.2 新增一个障碍物
+### 6.2 新增一个障碍物
 
 在 `obstacles.py` 的 `OBSTACLES` 元组中加一项：
 
@@ -187,7 +280,7 @@ _o("OB-B21", "球道标识牌", "B", "400×600 mm 板 + Φ30 立柱", "金属+�
 - 近地目标（顶面 ≤80 mm）加 `near_ground=True`（LiDAR 在 0.67 m 内自动不负责，超声兜底）；
 - 特性记录目标（不设门限）写 `rate={"L": None}`，普查会记录但不断言。
 
-### 5.3 新增一条测试用例（四步）
+### 6.3 新增一条测试用例（四步）
 
 以新增"TC-L-12 泥浆飞溅致盲"为例：
 
@@ -196,7 +289,7 @@ _o("OB-B21", "球道标识牌", "B", "400×600 mm 板 + Φ30 立柱", "金属+�
 3. **条件表**：专项检出类在 `scenarios.py` 的 `NAMED` 加 `_c("OB-B21", "L", 1.0, 0.95)` 形式的条件；并确认 `test_scenarios.py` 的编号连续性测试（TC-L 必须连续到 12）。
 4. **测试**：`tests/test_gates_l.py` 的参数化会自动覆盖新用例；若属安全类，在 `test_gates_f.py` 补零碰撞断言。
 
-### 5.4 接入真实仿真引擎（Isaac Sim / Gazebo / 自研）
+### 6.4 接入真实仿真引擎（Isaac Sim / Gazebo / 自研）
 
 唯一需要实现的是替换 `backends.SyntheticBackend`：
 
@@ -219,7 +312,7 @@ v = run_tc("TC-L-05", IsaacBackend())     # 门禁与阈值一字不改
 
 `run_tc` 第二个参数就是后端。选型决策按仓库约定写 ADR（`docs/adr/0003-*.md`，对应 tasks.md Task 1）。真值（GT）对齐：引擎侧须输出 ≥100 Hz 全局真值快照，检出判定用 spec 2.4 的定义（`verdict.py` 已实现统计部分）。
 
-## 6. 结果解读与放行
+## 7. 结果解读与放行
 
 | 现象 | 含义 | 处置 |
 |---|---|---|
@@ -227,11 +320,11 @@ v = run_tc("TC-L-05", IsaacBackend())     # 门禁与阈值一字不改
 | `failed` 含 `_overall/_safety`（TC-F-08） | 某降级组合低于包线 | 查 `degradation_envelope` 对应组合，定位弱传感器 |
 | `failed` 含 `collisions` | **安全项失败，不可豁免** | 立即冻结放行，转感知团队归因 |
 | 大量检出率恰在门限边缘 | 传感器模型或安装参数与门限不匹配 | 查 `sensor_params.yaml` 与覆盖预算（0.67 m 线、超声 1.5 m 量程） |
-| `KeyError: 未在 test_thresholds.yaml 登记` | 用例号没配阈值 | 补 yaml（见 5.3） |
+| `KeyError: 未在 test_thresholds.yaml 登记` | 用例号没配阈值 | 补 yaml（见 6.3） |
 
 **放行清单**（对应 spec DoD）：46 条 verdict 全 pass → 安全类碰撞 =0 → `pytest` 全绿 → `ruff check .` 无告警 → verdict JSON 归档 → INDEX 登记。
 
-## 7. 常见问题（FAQ）
+## 8. 常见问题（FAQ）
 
 **Q1：为什么不叫 oracle.py / 和 Oracle 数据库有关系吗？**
 没有关系。test oracle 是测试工程术语（判定器），为避免误会已更名 `verdict.py`。本项目无任何数据库依赖；若需把 verdict 落 MySQL 供部门查询，属新需求，需另立规格。
@@ -254,11 +347,11 @@ SyntheticBackend 是**判定链路的打通工具**：它按"标称门限 + 名�
 **Q7：中文文档在哪？**
 标准指导书（部门展示用）：`src/simulation/docs/sensor_test_standard.md`；需求与评审：`.trae/specs/0002-mower-sensor-sim-test-plan/`（spec.md / tasks.md / review.md）。
 
-## 8. 设计图索引（配合标准指导书）
+## 9. 设计图索引（配合标准指导书）
 
 七张设计图在 `src/simulation/docs/diagrams/`（由 `scripts/make_diagrams.py` 生成，改图请改脚本后重跑），按四类编目：架构类 `01`/`03`、流程类 `02`/`05`、数据类 `06`、模块交互类 `07`、障碍物介绍 `04`。部门展示直接用 `docs/sensor_test_standard.md` + 七图，或使用配套 PPT。
 
-## 9. 提交前自检（对照 AGENTS.md）
+## 10. 提交前自检（对照 AGENTS.md）
 
 ```bash
 PYTHONPATH=src /usr/local/anaconda3/envs/simulation-py312/bin/python -m pytest -q   # 必须全绿

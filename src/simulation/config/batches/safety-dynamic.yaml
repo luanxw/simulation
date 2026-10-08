@@ -1,0 +1,24 @@
+# 融合安全/动态专项批次（spec 0003 示例）
+#
+# 跑法：
+#   PYTHONPATH=src python -m simulation.cli run \
+#     --batch src/simulation/config/batches/safety-dynamic.yaml --version v1.0
+#
+# 标签语义：同一标签键内多个值是「或」，不同标签键之间是「与」。
+# 本批次 = 融合专题（suites: F）中，场景类型为 safety 或 dynamic
+# （kind 或），且场景世界为 W1 或 W2（world 与）的用例，命中 5 条：
+#   TC-F-06 动态跟踪 / TC-F-07 遮挡 pop-out / TC-F-11 端到端延迟
+#   TC-F-09 安全功能——静态避碰 / TC-F-10 安全功能——动态避碰
+# 命令行还可继续收窄，例如追加 --tc TC-F-* --tag kind=safety 只跑安全两条。
+name: safety-dynamic
+datasets:
+  - synthetic-default
+suites:
+  - F
+tags:
+  world:
+    - W1
+    - W2
+  kind:
+    - safety
+    - dynamic

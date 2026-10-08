@@ -187,7 +187,12 @@
 - **Notes**：测试以 `main([...])` 同进程注入 tmp out 为主，--help 用 subprocess 验真实入口。
 
 ## Task 8：示例批次与用户指南
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - 新增示例批次 [lidar-suite.yaml](file:///Users/allen/source/positec/simulation/src/simulation/config/batches/lidar-suite.yaml)（激光 11 条、含字段中文注释）与 [safety-dynamic.yaml](file:///Users/allen/source/positec/simulation/src/simulation/config/batches/safety-dynamic.yaml)（F 专题 world W1/W2 × kind safety/dynamic，命中 F-06/07/09/10/11 共 5 条）。
+  - [user_guide.md](file:///Users/allen/source/positec/simulation/src/simulation/docs/user_guide.md) 新增第 5 章「批次执行与可视化报告」（批次字段与交集/追加语义、数据集注册表与 external 预留、CLI 全参数与退出码 0/1/2、归档五件套与复现方法、报告取证路径、静态目录发布），后续章节顺延为 6-10，代码地图补入 0003 全部模块。
+  - 补漏（spec 非目标合规）：[execution.py](file:///Users/allen/source/positec/simulation/src/simulation/execution.py) 在 execute_batch 拦截 external 数据集实际执行（抛 DatasetError → CLI 退出码 2、不归档），dry-run 纯解析仍可预览；新增对应负向测试，修复"external 被静默按合成跑"的缺口。
+  - TR-8.1~8.3：dry-run 实测激光=11、安全/动态=5；[test_docs.py](file:///Users/allen/source/positec/simulation/tests/test_docs.py) 新增 3 项（示例批次装载与命中集合/交集收窄、指南章节关键锚点与章节重编号、指南激光命令解析后子进程原样执行并生成 report.html+index.html）；全套 `pytest -q` → 254 passed；`ruff check .` → All checks passed!（2026-10-08）。rubric TR-8.4 留独立评审打分。
 - **Priority**：medium
 - **Depends On**：Task 7
 - **Description**：
