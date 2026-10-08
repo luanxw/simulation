@@ -126,3 +126,73 @@ $ python -m simulation.cli run --suite X         → EXIT=2  错误：选择结�
 1. **阻断项（决定结论）**：完成 F1——CLI `--suite/--tag` 取值纳入与批次 YAML 同构的枚举校验，非法值退出码 2、错误信息列合法值、不产生归档；特别确认 `--tag world=<非法值>` 不再静默执行「任意」用例；补齐三类 CLI 回归测试与合法值不回归测试。修复后重跑 `pytest -q`（应仍 ≥255 且新增用例）与 `ruff check .` 全绿。
 2. F2/F3/F4 为 minor，建议同分支一并修复；若延期请在 tasks.md 登记为后续任务并说明理由。
 3. 复审方式：在 F1 修复后的新 commit 上，重点重放本报告 F1 的三条命令（`--tag world=W9` / `--tag kind=foo` / `--suite X`）并核对退出码、错误文本与零归档，其余 AC 可采信 R1 证据做回归确认。
+
+## R2 复审（2026-10-08）
+
+- **复审基线 commit**：`fc8d4f5717113bd7140bdeff3af42700bb41594d`（分支 `spec/0003-batch-run-and-test-report`，工作区干净；R1 基线 7c43e37，整改提交 fc8d4f5）
+- **复审人**：全新独立上下文 agent，未参与实施与 R1 评审；仅阅读、运行与在本文件末尾追加，未改动 `src/`、`tests/` 任何文件（全部实证产物写入 `/tmp/sim-r2`，仓库 `reports/` 零写入，`git status` 干净）。
+- **复审方法**：不照抄 tasks.md 数字——独立重放 F1 三命令并分离 stdout/stderr；自写 `/tmp` 脚本构造 F2/F3 场景（字典序/时间序相反、双类损坏条目、external 注册表注入 + 完整 `cli.main` 路径）；F4 三类编号实跑；全量 pytest/ruff 重跑；对 AC-2/3/4/10 相关语义另做 CLI 抽查。
+
+### 复审结论：pass
+
+F1 blocker 与 F2/F3/F4 三个 minor **全部闭环**；14 条 rule 全 pass，三条 rubric 维持 R1 的 5 分（均 ≥4），满足「所有 rule pass 且三条 rubric ≥4」。
+
+### F1~F4 逐条核验表
+
+| 项 | 复审人真实执行（PYTHONPATH=src，python3.12） | 退出码 | 关键 stderr / stdout | 归档 | 结论 |
+|---|---|---|---|---|---|
+| F1-a | `python -m simulation.cli run --tag world=W9 --out /tmp/sim-r2/f1a` | **2** | stderr：`错误：覆盖标签 world 含未知值 ['W9']；可选：W0, W1, W2, W3`（stdout 为空，错误确在 stderr） | `/tmp/sim-r2/f1a` 不存在 | **闭环** |
+| F1-b | `python -m simulation.cli run --tag kind=foo --out /tmp/sim-r2/f1b` | **2** | stderr：`错误：覆盖标签 kind 含未知值 ['foo']；可选：drive, dynamic, safety, static` | 不存在 | **闭环** |
+| F1-c | `python -m simulation.cli run --suite X --out /tmp/sim-r2/f1c` | **2** | stderr：`错误：覆盖条件含未知专题 ['X']；可选：L, U, C, F` | 不存在 | **闭环** |
+| F1 防误伤 | `python -m simulation.cli run --suite F --tag world=W1 --out /tmp/sim-r2/ok` | **0** | `1 数据集 × 11 用例 = 11 次执行`，融合 11/11；归档 results.json 的 tcs 实测为 `TC-F-01..05、07..11、TC-F-13`，**TC-F-13（world="任意"）在列** | 五件套齐全 | **闭环**（「任意」兜底未被误伤） |
+| F2 | `/tmp/sim-r2/f2_check.py`：write_archive 注入 v2.0@2026-10-05（早）/ v10.0@2026-10-08（晚），断言 `late.name < early.name`（字典序确实相反）；另放带时间戳损坏条目 v0.9@10-01、无时间戳正常条目（manifest created_at=10-03）、无时间戳损坏条目 | 脚本 0 | iter_archives 实测行序 = `v0.9(损坏,10-01) → zz-manual-nostamp(10-03) → v2.0(10-05) → v10.0(10-08) → zzz-no-timestamp-corrupt(最后)`，与期望完全一致；index 中 v2.0 位置先于 v10.0；损坏行红标「⚠ manifest 无法解析：JSONDecodeError」仍参与排序显示 | — | **闭环**（内嵌时间戳主键、同秒序号、created_at 回退、损坏排最后四条路径均独立实证，强于仓库内单测） |
+| F3 | `/tmp/sim-r2/f3_check.py`：parse_datasets 注入 external 数据集 ext-real（path+checksum），monkeypatch `load_datasets` 后调 resolve_datasets/preview/execute_batch，并经 `cli.main` 走完整 CLI | resolve/preview 正常；实跑 **2** | resolve：`seeds=[]、seed_source=external`（`--seed 42` 覆盖下仍为 `[]`）；preview：`ext-real [external] … path=data/ext.zip（external 数据集本期不执行，不使用合成种子）`，无 `[11, 22, 33]`；execute_batch 抛 DatasetError；CLI 实跑 stderr 报 external 不执行、退出 2 | 实跑无归档；dry-run 退出 0 且无 out 目录 | **闭环** |
+| F4 | `--tc TC-Q-01`、`--tc TC-L-99`、`--tc 'TC-Z-*' --dry-run` | 均 **2** | 精确编号：`错误：未知用例编号 'TC-Q-01'；可用编号：TC-L-01~TC-L-11、TC-U-01~TC-U-12、TC-C-01~TC-C-10、TC-F-01~TC-F-13（共 46 条）`；越界编号 TC-L-99 同文；通配无命中：`通配模式 'TC-Z-*' 未命中任何用例；可用编号区间：…（共 46 条）`（dry-run 同样拦截） | 三种均无归档 | **闭环**（终端直接分组列可选编号 + 总数） |
+
+根因核对：修复位于 [selection.py `_validate_override`](file:///Users/allen/source/positec/simulation/src/simulation/selection.py#L256-L275)（select_tcs 应用覆盖前校验，[L282-L285](file:///Users/allen/source/positec/simulation/src/simulation/selection.py#L282-L285)），与批次 YAML 侧校验同构、未触碰 [`_world_matches`](file:///Users/allen/source/positec/simulation/src/simulation/selection.py#L227-L230) 对合法值的「任意」兜底——定位与 R1 修复建议一致，无绕过面（dry-run 与实跑共用 select_tcs，F4-c 已证 dry-run 同样生效）。
+
+### 回归与全量验证
+
+```text
+$ PYTHONPATH=src /usr/local/anaconda3/envs/simulation-py312/bin/python -m pytest -q
+........................................................................ [ 27%]
+........................................................................ [ 54%]
+........................................................................ [ 82%]
+...............................................                          [100%]
+263 passed in 9.78s
+
+$ /usr/local/anaconda3/envs/simulation-py312/bin/ruff check .
+All checks passed!
+```
+
+- 数字真实复现：**263 passed**（= R1 255 + 8 整改回归），ruff 零告警。
+- 0003 八测试文件 `--collect-only` 实测：test_datasets 21 / **test_selection 31（+6）** / test_execution 10 / test_archive 10 / test_report 9 / **test_history 6（+1）** / **test_cli 13（+1）** / test_docs 7，合计 107（R1 为 99，+8 与声称一致）；8 项新测试单独点名执行 `8 passed`。
+- **新增/收紧测试断言质量评价（逐条，均为强断言、无被绕过）**：
+  1. `test_override_unknown_suite_rejected_with_options`：raises match「未知专题」且断言含「可选」与 L/F；
+  2. `test_override_unknown_tag_values_rejected_with_options`：world=W9、kind=foo 双例，逐字断言 W0/W1/W2/W3 与 static/safety 全部出现在错误文本；
+  3. `test_override_unknown_tag_key_rejected`：未知键 raises；
+  4. `test_override_valid_world_still_matches_any_world_case`：既断言 TC-F-13 仍命中，又断言结果集**全部**为「任意」或含 W1——防「修校验顺手删兜底」的双向守护；
+  5. `test_unknown_exact_tc_error_lists_available_ids`：精确断言四个分组区间字符串齐全；
+  6. `test_external_dataset_preview_has_no_synthetic_seeds`：seeds==[]、source=external、提示语在、合成种子串不在；
+  7. `test_sorted_by_embedded_timestamp_not_version_lexical`：先断言前置条件 `late.name < early.name`，再精确比对行序列表与页面位置；
+  8. `test_valid_world_tag_runs_and_keeps_any_world_case`（CLI）：`cli.main` 真实退出 0 并读归档 results.json 断言 TC-F-13；
+  收紧的 `test_selection_errors_exit_2_without_archive` 由「错误：」前缀升级为 5 类场景分别断言「可选」或「选择结果为空」并逐例断言 out 目录不存在。
+  反证强度推演：若移除 `_validate_override`，用例 1/2 将分别失配「未知专题」/「DID NOT RAISE」（W9 会再次静默命中 TC-F-13）；回退旧排序/旧 F3/F4 文本，用例 5/6/7 必失败——测试对缺陷真实敏感。
+- **既有语义抽查（整改未破坏）**：①合法 `--tag world=W1` 选中 11 条含 TC-F-13、`--tag kind=drive` 4 条；②交集收窄 lidar 批次 ∩ `--suite F` → 退出 2「选择结果为空」（值合法、仅空交集，文案区分正确）；③exclude 追加：`--suite L --exclude TC-L-11 --exclude 'TC-L-0[1-5]'` dry-run 恰剩 TC-L-06~10 共 5 条、退出 0、零产物；④多数据集批次（synthetic-default + synthetic-seed42 × TC-L-01/TC-U-03）实跑 2×2=4，manifest seed 分别为 `[11,22,33]/sampling_default` 与 `[42]/dataset`，同用例两数据集首检值因 seed 不同而不同（0.124274 vs 0.039273）；⑤external 实跑拦截退出 2（见 F3）。
+
+### AC 状态
+
+- **AC-2（独立复核 pass）**：CLI 实测交集收窄、exclude 追加（精确+通配双 `--exclude`）、合法 world/kind 标签、L 起始排序、dry-run 零产物均与规格语义一致；选择器测试 31 项全绿。
+- **AC-3（独立复核 pass）**：多数据集矩阵条数=数据集数×用例数、每结果带数据集 id、seeds 与来源写入 manifest 且实际影响数值；external schema 可解析、不执行（F3 实证）。
+- **AC-4（独立复核 pass，由 R1 fail 转 pass）**：未知标签值（world/kind，批次 YAML W7 与 CLI W9/foo 两路径均实测）、未知专题、未知用例编号/通配、未知数据集、空交集/空选择五类均退出 2、错误文本列可选值、不创建归档；F1 的假全绿路径已被枚举校验在选择前阻断，合法「任意」兜底保留。
+- **AC-10（独立复核 pass）**：时间序排序（F2）、损坏条目标注且不致命、相对链接 `archive/<dir>/report.html`、版本/运行时间/总体单元格与 manifest 一致（sem3 真实归档实测）、零外链、固定生成时间渲染幂等均成立。
+- **AC-1、AC-5~9、AC-11~14**：整改 diff 仅触及 selection.py（校验/错误文案/external 预览）、history.py（排序键）、user_guide.md 一行测试计数注释与 3 个测试文件；report.py、archive.py、runner.py、datasets.yaml、示例批次均未改动，R1 所依赖的产物/报告/复现证据不被影响，且 263 全量回归全绿——**采信 R1 pass 结论**。
+- **rubric**：AC-15=5、AC-16=5 —— 报告渲染链路零改动，R1 的页面实测与下钻证据持续有效，维持 5 分；AC-17=5 —— 批次/合成数据集纯 YAML 扩展路径未变，external 预览文案由「误挂合成种子」改为明确 path 与「本期不执行」提示，可扩展性/防误导性只增不减，维持 5 分。
+
+### 新发现
+
+无。（附带观察，非缺陷：override 非法值文案以「覆盖标签/覆盖条件」前缀与批次侧区分，措辞不同构但同样列出可选值，满足 FR-4；lowercase 如 `--suite l` 现按未知值拦截并列合法值，属 FR-4 要求的收紧，规格定义专题本就为大写。）
+
+### 最终判定
+
+R2 复审 **pass**：R1 唯一 blocker（F1）与 F2/F3/F4 均已真实闭环并由 8 项强断言回归固化；14 条 rule 全 pass、三条 rubric 均 5 分，`263 passed`、`ruff All checks passed!` 独立复现，未发现新增问题。

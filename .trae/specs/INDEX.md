@@ -6,7 +6,7 @@
 |---|---|---|---|---|---|---|---|
 | 0001 | fix | 工作流断点恢复、严格门禁与智能受理 | [0001-workflow-resume-and-intake](0001-workflow-resume-and-intake/) | fix/0001-workflow-resume-and-intake | Done | R2 pass | 2026-09-27 |
 | 0002 | 割草机器人传感器套件仿真测试方案 | .trae/specs/0002-mower-sensor-sim-test-plan/ | Approve（2026-10-05 用户批准；pytest 代码基线已建，见 tasks.md 实施进展备注） | R2 pass（方案文档评审；实施终审待 Task 1~12 完成后另行进行） | 2026-10-05 |
-| 0003 | feature | 运行时批次选择与可视化测试报告 | [0003-batch-run-and-test-report](0003-batch-run-and-test-report/) | spec/0003-batch-run-and-test-report | Review（Task 1~9 完成，待全新上下文独立评审；255 passed） | — | 2026-10-08 |
+| 0003 | feature | 运行时批次选择与可视化测试报告 | [0003-batch-run-and-test-report](0003-batch-run-and-test-report/) | spec/0003-batch-run-and-test-report | Done | R2 pass（R1 F1 blocker+F2~F4 已整改闭环；AC-15/16/17 均 5 分；263 passed） | 2026-10-08 |
 
 
 **类型**：`feature`（新需求交付）/ `fix`（问题修复），由智能受理按关键词规则判定。
