@@ -17,6 +17,9 @@ venv/
 .coverage
 htmlcov/
 
+# Test run archives（spec 0003：批次执行归档与报告，不入库）
+reports/
+
 # OS / editor
 .DS_Store
 .idea/

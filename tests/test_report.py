@@ -124,7 +124,7 @@ def test_report_written_end_to_end_in_archive(tmp_path, manifest_kwargs):
     rec = execute_batch(batch(suites=("L",)))
     html_text = render_report(rec, build_manifest(rec, **manifest_kwargs))
     path = write_archive(tmp_path / "reports", rec,
-                         report_html=html_text, moment=None)
+                         report_renderer=lambda r, m: html_text)
     written = (path / "report.html").read_text(encoding="utf-8")
     assert written == html_text
     assert re.search(r"<!DOCTYPE html>", written)

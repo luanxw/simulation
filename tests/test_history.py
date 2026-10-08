@@ -25,7 +25,7 @@ def batch(**kw) -> BatchConfig:
 def _make_archive(root, version, moment, **batch_kw):
     rec = execute_batch(batch(**batch_kw))
     return write_archive(root, rec, version=version, moment=moment,
-                         report_html="<!DOCTYPE html><html></html>")
+                         report_renderer=lambda r, m: "<!DOCTYPE html><html></html>")
 
 
 def test_index_lists_all_archives_with_rates_and_links(tmp_path):
