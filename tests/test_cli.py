@@ -9,6 +9,9 @@ import pytest
 
 from simulation import cli
 
+ROOT = Path(__file__).resolve().parents[1]
+LIDAR_BATCH = ROOT / "src/simulation/config/batches/lidar-suite.yaml"
+
 
 def test_help_all_levels(capsys):
     for argv in (["--help"], ["run", "--help"], ["rebuild-index", "--help"]):
@@ -71,6 +74,23 @@ def test_bad_tag_syntax_exits_2(capsys):
     with pytest.raises(SystemExit) as exc:
         cli.main(["run", "--tag", "world"])
     assert exc.value.code == 2
+
+
+def test_selection_errors_exit_2_without_archive(tmp_path, capsys):
+    """AC-4：未知数据集 / 未知标签值 / 交集为空 三类错误都退出 2 且无归档。"""
+    out_dir = tmp_path / "reports"
+    bad_dataset = tmp_path / "bad-ds.yaml"
+    bad_dataset.write_text("name: bad-ds\ndatasets: [nope-dataset]\n", encoding="utf-8")
+    cases = [
+        ["run", "--batch", str(bad_dataset), "--out", str(out_dir)],
+        ["run", "--tag", "kind=foo", "--out", str(out_dir)],
+        # 激光批次与命令行 --suite F 交集为空
+        ["run", "--batch", str(LIDAR_BATCH), "--suite", "F", "--out", str(out_dir)],
+    ]
+    for argv in cases:
+        assert cli.main(argv) == 2, argv
+        assert "错误：" in capsys.readouterr().err, argv
+        assert not out_dir.exists(), argv
 
 
 def test_failed_tc_exits_1_but_archive_complete(tmp_path, capsys, monkeypatch):

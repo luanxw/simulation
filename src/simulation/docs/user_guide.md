@@ -31,9 +31,10 @@ alias simtest='PYTHONPATH=src /usr/local/anaconda3/envs/simulation-py312/bin/pyt
 ```bash
 cd /Users/allen/source/positec/simulation
 
-# ① 全部测试（156 项，含 46 条用例门禁 + 一致性 + 统计函数 + 安全负向测试）
+# ① 全部测试（255 项，含 46 条用例门禁 + 一致性 + 统计函数 + 安全负向测试
+#    + spec 0003 批次选择/执行矩阵/归档/报告/总览/CLI/文档一致性）
 PYTHONPATH=src /usr/local/anaconda3/envs/simulation-py312/bin/python -m pytest -q
-# 预期输出：156 passed
+# 预期输出：255 passed
 
 # ② 代码风格检查（提交前必做）
 /usr/local/anaconda3/envs/simulation-py312/bin/ruff check .

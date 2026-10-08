@@ -213,7 +213,20 @@
 - **Notes**：遵循既有"文档-配置一致性由测试守护"的约定。
 
 ## Task 9：端到端自验、证据归档与规格收尾
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**（2026-10-08，conda simulation-py312，分支 spec/0003-batch-run-and-test-report）：
+  - **TR-9.1 全量自验**：`ruff check .` → `All checks passed!`；`PYTHONPATH=src /usr/local/anaconda3/envs/simulation-py312/bin/python -m pytest -q` → `255 passed in 9.22s`。
+  - **TR-9.2 端到端真实输出**：
+    - 全量默认批次 `run --version e2e-full`：`1 数据集 × 46 用例 = 46 次执行`；激光 11/11（check 36/36）、USS 12/12（26/26）、相机 10/10（24/24）、融合 13/13（41/41）；总体 46/46、check 127/127；归档 `reports/archive/e2e-full_20261008T132839Z/`（五件套齐全）并生成 `reports/index.html`。
+    - 激光示例批次 `--batch config/batches/lidar-suite.yaml --version e2e-lidar`：11/11 通过；safety-dynamic 批次 `--tag kind=safety --seed 42 --version e2e-safety42`：交集收窄为 2/2（check 5/5），manifest seed=`[{dataset: synthetic-default, seeds: [42], source: cli}]`。
+    - dry-run `--suite U,C`：`合计：1 数据集 × 22 用例 = 22 次执行`，零产物；错误场景 `--tc TC-X-99`：stderr `错误：未知用例编号 'TC-X-99'；全部 46 条编号见 scenarios.py`，退出码 2。
+    - **复现性**：相同批次+seed 42 两次执行（reports 与 /tmp 两个独立归档）`results.json` `diff` 字节一致（RESULTS-BYTES-IDENTICAL）。
+    - **幂等**：连续两次 `rebuild-index`，index.html 去除生成时间戳后 `diff` 一致（INDEX-IDEMPOTENT）。
+    - **失败语义（AC-12）**：注入 `lidar_blind` 故障跑 TC-L-05：verdict pass=False、7 项检查失败，归档五件套与 report.html 仍完整写出，报告含失败标记；CLI 退出码 1 路径由 test_cli::test_failed_tc_exits_1_but_archive_complete 固化。
+    - **报告证据行实例**：`OB-B1@L:0.5m | 通过 | 实测值 1.0 | ≥ | 门限 0.98 | 样本量 n=600 | Wilson 95% CI [0.9906, 0.9997]`；报告与总览均无 http(s) 外链、无 script。
+    - 端到端产物在已 gitignore 的 `reports/` 与 /tmp 下；`reports/` 未入库（删除操作需用户授权，保留待用户自行清理）。
+  - **AC 覆盖核对**：rule 类 AC-1~AC-14 全部有自动化测试与真实产物证据（选择器 25、数据集 21、执行矩阵 10、归档 10、报告 9、总览 5、CLI 12、文档 7）；AC-4 补齐未知数据集/未知标签值/交集为空三类 CLI 退出码 2 测试（test_selection_errors_exit_2_without_archive）；rubric AC-15/16/17 留独立 Review 打分。
+  - 指南测试总数同步为 255。
 - **Priority**：medium
 - **Depends On**：Task 8
 - **Description**：
