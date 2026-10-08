@@ -1,0 +1,21 @@
+# 数据集注册表（spec 0003 FR-3）：批次通过 id 引用数据集，执行矩阵 = 数据集 × 用例。
+# kind: synthetic —— 合成后端数据；params 仅允许 seeds（覆盖 test_thresholds.yaml
+#                    的 sampling.default_seeds），用于以参数组表达"多批数据"。
+# kind: external  —— 预留：真实采集/仿真引擎数据包。本期只做 schema 校验与归档引用，不执行。
+#                    必填 path（数据包路径，相对路径以仓库根为基准）；
+#                    可选 checksum: {alg: sha256, value: <hex>}。
+version: 1
+
+datasets:
+  - id: synthetic-default
+    kind: synthetic
+    title: 默认合成数据集
+    description: 沿用 sampling.default_seeds（11/22/33）的确定性观测；未显式声明数据集的批次默认使用。
+    params: {}
+
+  - id: synthetic-seed42
+    kind: synthetic
+    title: 合成数据集（seeds=[42] 参数组）
+    description: 多批数据示例：仅把采样种子覆盖为 42，其余采样参数沿用 sampling 段。
+    params:
+      seeds: [42]
