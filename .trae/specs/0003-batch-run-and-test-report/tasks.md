@@ -34,7 +34,11 @@
 - **Notes**：不修改任何现有用例与阈值文件。
 
 ## Task 2：批次 YAML 与用例选择器
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - 新增 [selection.py](file:///Users/allen/source/positec/simulation/src/simulation/selection.py)（BatchConfig/SelectionOverride、load_batch/parse_batch、select_tcs 交集收窄、resolve_datasets、preview、SelectionError）与 [test_selection.py](file:///Users/allen/source/positec/simulation/tests/test_selection.py)。
+  - 实施中修复两处真实缺陷：空 tuple 默认值被 list 校验拒绝；排序改为专题 L/U/C/F 固定顺序+编号数字（与注册顺序一致），并由测试固化。
+  - TR-2.1~2.5：新增 25 项选择器测试全绿；全套 `pytest -q` → 206 passed（无回归）；`ruff check .` → All checks passed!（2026-10-08）。
 - **Priority**：high
 - **Depends On**：None
 - **Description**：
