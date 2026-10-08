@@ -60,7 +60,10 @@
 - **Notes**：标签键刻意限定 world/kind，不引入自由 tags 字段，避免与用例注册脱节。
 
 ## Task 3：批次执行编排（数据集 × 用例矩阵）与可复现
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - 新增 [runtime.py](file:///Users/allen/source/positec/simulation/src/simulation/runtime.py)（ContextVar seeds 上下文）、[execution.py](file:///Users/allen/source/positec/simulation/src/simulation/execution.py)（execute_batch / summarize / SUITE_TITLES，RunRecord 可 JSON 序列化）；微调 [runner.py](file:///Users/allen/source/positec/simulation/src/simulation/runner.py)（`_seeds()` 读上下文、`run_tc(..., seeds=None)` 可选参数，默认行为不变）；新增 [test_execution.py](file:///Users/allen/source/positec/simulation/tests/test_execution.py)。
+  - TR-3.1~3.6：矩阵条数、数据集 seeds、`--seed` 覆盖、同输入两次执行 verdict 全等、无参调用与历史行为一致、summary 手工核对、故障注入失败计数、JSON 可序列化共 9 项测试全绿；全套 `pytest -q` → 215 passed；`ruff check .` → All checks passed!（2026-10-08）。
 - **Priority**：high
 - **Depends On**：Task 1、Task 2
 - **Description**：
@@ -82,7 +85,11 @@
 - **Notes**：runner 微调仅限 `_seeds()` 取值来源与可选参数，判定逻辑零改动。
 
 ## Task 4：归档目录与 manifest 证据链
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - 新增 [archive.py](file:///Users/allen/source/positec/simulation/src/simulation/archive.py)（safe_slug 保留中文、utc_stamp/iso_now、detect_git 默认锚定包源码目录、resolve_version、build_manifest、write_archive 含同秒冲突序号）、[test_archive.py](file:///Users/allen/source/positec/simulation/tests/test_archive.py)；[.gitignore](file:///Users/allen/source/positec/simulation/.gitignore) 增加 `reports/`。
+  - 实施修正：自动版本 dev-<stamp> 不再重复拼接时间戳；git 探测锚点改为包源码目录（输出目录在仓库外时仍记录被测代码版本）。
+  - TR-4.1~4.5：10 项测试全绿（产物齐全可解析、manifest 字段、git unavailable 不致命（monkeypatch）、同版本双目录、slug 安全化、results.json 逐字节可复现、reports/ 已忽略）；全套 `pytest -q` → 225 passed；`ruff check .` → All checks passed!（2026-10-08）。
 - **Priority**：high
 - **Depends On**：Task 3
 - **Description**：
@@ -104,7 +111,11 @@
 - **Notes**：时间戳/manifest 运行时间字段是 AC-11 复现比对时唯一允许的差异。
 
 ## Task 5：自包含单次 HTML 报告
-- **Status**：`pending`
+- **Status**：`completed`
+- **Completion Evidence**：
+  - 新增 [report.py](file:///Users/allen/source/positec/simulation/src/simulation/report.py)（render_report：内联 CSS、原生 details 折叠、四专题分区、用例多数据集分组、check 表含 value/op/threshold/n/Wilson CI、动态内容 HTML 转义）与 [test_report.py](file:///Users/allen/source/positec/simulation/tests/test_report.py)。
+  - 微调 [runner.py](file:///Users/allen/source/positec/simulation/src/simulation/runner.py)：专项检出类（TC-L-05/06/07、TC-U-03/04、TC-C-04）的每条 check 附加样本量 `n` 与 Wilson 95% `ci`（原计算结果此前被丢弃），门禁判定不变、既有测试无回归。
+  - TR-5.1~5.5：9 项测试全绿（四专题统计一致、全部 check 证据入页、CI 渲染、零外链自包含、失败红色可定位、多数据集分组、details 位于专题内、XSS 转义、归档端到端写入）；rubric TR-5.6/5.7 留独立评审在浏览器评分；全套 `pytest -q` → 234 passed；`ruff check .` → All checks passed!（2026-10-08）。
 - **Priority**：high
 - **Depends On**：Task 4
 - **Description**：

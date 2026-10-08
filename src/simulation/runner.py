@@ -54,8 +54,13 @@ def _detection_case(be: SyntheticBackend, tc_id: str) -> dict:
     frames = _frames(tc_id)
     seeds = _seeds()
     stats = [_hit_stats(be, tc_id, c, frames, seeds) for c in NAMED[tc_id]]
-    checks = [gate_check(s["cond"], s["rate"], "ge", c["min_rate"])
-              for s, c in zip(stats, NAMED[tc_id], strict=True)]
+    checks = []
+    for stat, cond in zip(stats, NAMED[tc_id], strict=True):
+        chk = gate_check(stat["cond"], stat["rate"], "ge", cond["min_rate"])
+        # 证据随行（spec 0003 FR-7）：样本量与 Wilson 95% 置信区间
+        chk["n"] = stat["n"]
+        chk["ci"] = stat["ci"]
+        checks.append(chk)
     return make_verdict(tc_id, checks)
 
 
@@ -70,8 +75,10 @@ def _frames(_tc_id: str) -> int:
 
 
 def _seeds() -> list[int]:
+    from .runtime import current_seeds
     from .thresholds import sampling
-    return sampling()["default_seeds"]
+    # 数据集粒度的 seeds 覆盖（spec 0003）；未设置时行为与历史一致
+    return current_seeds() or sampling()["default_seeds"]
 
 
 def _accuracy_case(be: SyntheticBackend, tc_id: str) -> dict:
@@ -345,15 +352,23 @@ _DISPATCH = {
 }
 
 
-def run_tc(tc_id: str, backend: SyntheticBackend | None = None) -> dict:
-    """执行一条用例并返回 verdict（dict，可 json.dumps 落盘）。"""
+def run_tc(tc_id: str, backend: SyntheticBackend | None = None,
+           seeds: list[int] | None = None) -> dict:
+    """执行一条用例并返回 verdict（dict，可 json.dumps 落盘）。
+
+    seeds 为 None 时沿用上下文/配置默认种子；显式传入时仅对本次执行覆盖。
+    """
     if tc_id not in SCENARIOS:
         msg = f"未知用例编号：{tc_id}"
         raise KeyError(msg)
     be = backend or SyntheticBackend()
     gates = _gates(tc_id)
     runner = _DISPATCH.get(gates["archetype"], _simple_model_case)
-    return runner(be, tc_id)
+    if seeds is None:
+        return runner(be, tc_id)
+    from .runtime import seeds_context
+    with seeds_context(seeds):
+        return runner(be, tc_id)
 
 
 def run_suite(suite: str, backend: SyntheticBackend | None = None) -> dict[str, dict]:
